@@ -1,0 +1,1 @@
+[Chinese Version](https://github.com/SaberDa/Imitation-Redis-database/blob/master/doc/plan-ch.md)
