@@ -24,7 +24,7 @@
 #endif
 
 #elif defined(__APPLE__)
-#include <malloc.malloc.h>
+#include <malloc/malloc.h>
 #define HAVE_MALLOC_SIZE 1
 #define zmalloc_zise(p) malloc_size(p)
 #endif
