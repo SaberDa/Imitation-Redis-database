@@ -219,3 +219,13 @@ size_t zmalloc_used_memory(void) {
 
     return um;
 }
+
+void zmalloc_enable_thread_safemess(void) {
+    zmalloc_thread_safe = 1;
+}
+
+void zmalloc_set_oom_handler(void (*oom_handler)(size_t)) {
+    zmalloc_oom_handler = oom_handler;
+}
+
+
