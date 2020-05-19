@@ -228,4 +228,97 @@ void zmalloc_set_oom_handler(void (*oom_handler)(size_t)) {
     zmalloc_oom_handler = oom_handler;
 }
 
+/*
+ * Get the RSS information in an OS-specific way
+ * 
+ * WARNING: the function zmalloc_get_rss() is not designed to be fast and
+ * may not be called in the busy loops where Redis tries to release
+ * memory expiring or swapping out objects
+ * 
+ * For this kind of "fast RSS reporting" usage use instead the function
+ * RedisEstimateRSS() that is a much faster (and less precise) version
+ * of the function
+*/
 
+
+#if defined(HAVE_PROC_STAT)
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+size_t zmalloc_get_rss(void) {
+    int page = sysconf(_SC_PAGESIZE);
+    size_t rss;
+    char buf[4096];
+    char filename[256];
+    int fd, count;
+    char *p, *x;
+
+    snprintf(filename, 256, "/proc/%d/stat", getpid());
+    if ((fd = open(filename, O_RDONLY)) == -1) {
+        return 0;
+    }
+    if (read(fd, buf, 4096) < 0) {
+        close(fd);
+        return 0;
+    }
+    close(fd);
+
+    p = buf;
+    count = 23;   // RSS is the 24th field in /proc/<pid>/stat
+    while (p && count--) {
+        p = strchr(p, ' ');
+        if (p) {
+            p++;
+        }
+    }
+    if (!p) {
+        return 0;
+    }
+    x = strchr(p, ' ');
+    if (!x) {
+        return 0;
+    }
+    *x = '\0';
+
+    rss = strtoll(p, NULL, 10);
+    rss *= page;
+    return rss;
+}
+#elif defined(HAVE_TASKINFO)
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/task.h>
+#include <mach/mach_init.h>
+
+size_t zmalloc_get_rss(void) {
+    task_t task = MACH_PORT_NULL;
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+    if (task_for_pid(current_task(), getpid(), &task) != KERN_SUCCESS) {
+        return 0;
+    }
+    task_info(task, TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count);
+
+    return t_info.resident_size;
+}
+
+#else
+size_t zmalloc_get_rss(void) {
+    /*
+     * If we can't get the RSS in an OS-specific way for this system 
+     * just return the memory usage we estimated in zmalloc()
+     * 
+     * Fragmentation will appear to be always 1 (no fragmentation)
+     * of course
+    */
+    return zmalloc_used_memory();
+}
+
+#endif
