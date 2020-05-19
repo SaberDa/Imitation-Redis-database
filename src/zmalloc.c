@@ -322,3 +322,38 @@ size_t zmalloc_get_rss(void) {
 }
 
 #endif
+
+// Fragmentation = RSS / allocation-bytes
+float zmalloc_get_fragmentation_ratio(size_t rss) {
+    return (float)rss / zmalloc_used_memory();
+}
+
+#if defined(HAVE_PROC_SMAPS) 
+size_t zmalloc_get_private_dirty(void) {
+    char line[1024];
+    size_t pd = 0;
+    FILE *fp = fopen("/proc/self/smaps", "r");
+
+    if (!fp) {
+        return 0;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strncmp(line, "Private_Dirty", 14) == 0) {
+            char *p = strchr(line, 'k');
+            if (p) {
+                *p = '\0';
+                pd += strtol(line + 14, NULL, 10) * 1024;
+            }
+        }
+    }
+    fclose(fp);
+    return pd;
+}
+
+#else 
+
+size_t zmalloc_get_private_dirty(void) {
+    return 0;
+}
+
+#endif
