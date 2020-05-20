@@ -49,7 +49,7 @@ sds sdscpy(sds s, const char *t);
 
 sds sdscatvprintf(sds s, const char *fmt, va_list ap);
 #ifdef __GNUC__
-sds sdscatprintf(sds s, const char*fmt, ...)
+sds sdscatprintf(sds s, const char *fmt, ...)
     __attribute__((format(printf, 2, 3)));
 #else
 sds sdscatprintf(sds s, const char *fmt, ...);
@@ -58,7 +58,7 @@ sds sdscatprintf(sds s, const char *fmt, ...);
 sds sdscatfmt(sds s, char const *fmt, ...);
 sds sdstrim(sds s, const char *cset);
 void sdsrange(sds s, int start, int end);
-void sdsupdatelne(sds s);
+void sdsupdatelen(sds s);
 void sdsclear(sds s);
 int sdscmp(const sds s1, const sds s2);
 sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);
