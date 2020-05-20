@@ -48,7 +48,7 @@ sds sdscpylen(sds s, const char *t, size_t len);
 sds sdscpy(sds s, const char *t);
 
 sds sdscatvprintf(sds s, const char *fmt, va_list ap);
-#ifdef __GUNC__
+#ifdef __GNUC__
 sds sdscatprintf(sds s, const char*fmt, ...)
     __attribute__((format(printf, 2, 3)));
 #else
@@ -61,7 +61,7 @@ void sdsrange(sds s, int start, int end);
 void sdsupdatelne(sds s);
 void sdsclear(sds s);
 int sdscmp(const sds s1, const sds s2);
-sds *sdssplitlen(const char*s, int len, const char *sep, int seplen, int *count);
+sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);
 void sdsfreesplitres(sds *tokens, int count);
 void sdstolower(sds s);
 void sdstoupper(sds s);
@@ -73,7 +73,7 @@ sds sdsjoin(char **argv, int argc, char *sep);
 
 // low level functions exposed to the user API
 sds sdsMakeRoomFor(sds s, size_t addlen);
-void sdsIncrlen(sds s, int incr);
+void sdsIncrLen(sds s, int incr);
 sds sdsRemoveFreeSpace(sds s);
 size_t sdsAllocSize(sds s);
 
