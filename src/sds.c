@@ -154,3 +154,27 @@ void sdsupdatelen(sds s) {
     sh -> free += (sh->len - reallen);
     sh->len = reallen;
 }
+
+/*
+ * 在不释放 sds 的字符串空间的前提下
+ * 重置 sds 保存的字符串为空
+ * 
+ * T = O(n)
+ * 
+ * Modify an sds string on-place to make it empty (zero length)
+ * However all the existing buffer is not discarded but set as free space
+ * so that next append operations will not require allocations up to the
+ * number of bytes previously available 
+*/
+void sdsclear(sds s) {
+
+    // 取出 sdshdr
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+
+    // 重新计算 free 和 len
+    sh->free += sh->len;
+    sh->len = 0;
+
+    // 将结束符放到最前面（相当于惰性的删除buf中的内容）
+    sh->buf[0] = '\0';
+}
