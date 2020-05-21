@@ -131,3 +131,26 @@ void sdsfree(sds s) {
     }
     zfree(s - sizeof(struct sdshdr));
 }
+
+/*
+ * Set the sds string length to the length as obtained with strlen(), so
+ * considering as content only up to the first null term character
+ * 
+ * This function is useful when the sds string is hacked manually in some
+ * way, like in the following example:
+ * 
+ * s = sdsnew("foobar");
+ * s[2] = '\0';
+ * sdsupdatelen(s);
+ * printf("%d\n", sdslen(s));
+ * 
+ * The output will be 2, but if we comment out the call to sdsupdatelen() 
+ * the output will be 6 as the string was modified but the logical length 
+ * remains 6 bytes
+*/
+void sdsupdatelen(sds s) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+    int reallen = strlen(s);
+    sh -> free += (sh->len - reallen);
+    sh->len = reallen;
+}
