@@ -65,3 +65,20 @@ sds sdsnewlen(const void *init, size_t initlen) {
     // 返回 buf 部分，而不是整个 sdshdr
     return (char*)sh->buf;
 }
+
+/*
+ * 创建并返回一个只保存了空字符串 "" 的sds
+ * 
+ * 返回值
+ *   sds：创建成功返回 sdshdr 相对应的 sds
+ *        创建失败返回 NULL
+ * 
+ * 复杂度 
+ * T = O(n)
+ * 
+ * Create an empty (zero length) sds string. Even in this case the string
+ * always has am implicit null term
+*/
+sds sdsempty(void) {
+    return sdsnewlen("", 0);
+}
