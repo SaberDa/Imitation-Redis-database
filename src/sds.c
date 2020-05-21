@@ -117,3 +117,17 @@ sds sdsnew(const char *init) {
 sds sdsdup(const sds s) {
     return sdsnewlen(s, sdslen(s));
 }
+
+/*
+ * 释放给定的 sds
+ * 
+ * T = O(n)
+ * 
+ * Free an sds string. No operation is performed if 's' is NULL
+*/
+void sdsfree(sds s) {
+    if (s == NULL) {
+        return;
+    }
+    zfree(s - sizeof(struct sdshdr));
+}
