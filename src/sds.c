@@ -178,3 +178,65 @@ void sdsclear(sds s) {
     // 将结束符放到最前面（相当于惰性的删除buf中的内容）
     sh->buf[0] = '\0';
 }
+
+/*
+ * 对 sds 中 buf 的长度进行扩展，确保在函数执行之后，
+ * buf 至少会有 addlen + 1 长度空间
+ * （额外的1字节是为 \0 准备的）
+ * 
+ * 返回值：
+ *  sds:  扩展成功则返回扩展后的sds
+ *        扩展失败返回NULL
+ * 
+ * T = O(n)
+ * 
+ * Enlarge the free space at the end of the sds string so that caller 
+ * is sure that after calling this function can overwrite up to addlen
+ * bytes after the end of the string, plus one more byte for nul term
+ * 
+ * Note: this does not change the length of the sds string as returned 
+ * by sdslen(), but only the free buffer space we have
+*/
+sds sdsMakeRoomFor(sds s, size_t addlen) {
+    struct sdshdr *sh, *newsh;
+
+    // 获取 s 目前的空余空间长度
+    size_t free = sdsavail(s);
+
+    size_t len, newlen;
+
+    // s 目前剩余空间长度足够，无须进行扩展，直接返回
+    if (free >= addlen) {
+        return;
+    }
+
+    // 获取 s 目前已占用空间长度
+    len = sdslen(s);
+    sh = (void*) (s - (sizeof(struct sdshdr)));
+
+    // s 最少需要的长度
+    newlen = (len + addlen);
+
+    // 根据新长度，为 s 分配新空间所需要的大小
+    if (newlen < SDS_MAX_PREALLOC) {
+        // 如果新长度小于 SDS_MAX_PREALLOC
+        // 那么为它分配两倍于所需长度的空间
+        newlen *= 2;
+    } else {
+        // 否则，分配长度为目前长度加上 SDS_MAX_PREALLOC
+        newlen += SDS_MAX_PREALLOC;
+    }
+
+    // T = O(n)
+    newsh = zrealloc(sh, sizeof(struct sdshdr) + newlen + 1);
+
+    // 内存不足，分配失败，返回 NULL
+    if (newlen == NULL) {
+        return NULL;
+    }
+
+    // 更新 sds 的空余长度
+    newsh->free = newlen - len;
+    
+    return newsh->buf;
+}
