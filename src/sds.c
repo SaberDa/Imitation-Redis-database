@@ -82,3 +82,23 @@ sds sdsnewlen(const void *init, size_t initlen) {
 sds sdsempty(void) {
     return sdsnewlen("", 0);
 }
+
+/*
+ * 根据给定字符串 init，创建一个包含同样字符串的 sds
+ * 
+ * init：
+ *      如果输入为 NULL，那么创建一个空白sds
+ *      否则，新创建的 sds 中包含和 init 内容相同的字符串
+ * 
+ * 返回值：
+ *  sds: 创建成功返回 sdshdr 相对应的 sds
+ *       创建失败返回 NULL
+ * 
+ * T = O(n)
+ * 
+ * Create a new sds string starting from a null termind C string
+*/
+sds sdsnew(const char *init) {
+    size_t initlen = (init == NULL) ? 0 : strlen(init);
+    return sdsnewlen(init, initlen);
+}
