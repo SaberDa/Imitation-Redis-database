@@ -240,3 +240,34 @@ sds sdsMakeRoomFor(sds s, size_t addlen) {
     
     return newsh->buf;
 }
+
+/*
+ * 回收 sds 中空余的空间
+ * 回收不会对 sds 中保存的字符串内容做任何修改
+ * 
+ * 返回值：
+ *  sds: 内存调整后的 sds
+ * 
+ * T = O(n)
+ * 
+ * Reallocate the sds string so that it has no free space at the end. The 
+ * contained string remains not altered, but next concatenation operations 
+ * will require a reallocation
+ * 
+ * After the call, the passed sds string is no longer valid and all the 
+ * references must be substituted with the new pointer returned by the call 
+*/
+sds sdsRemoveFreeSpace(sds s) {
+    struct sdshdr *sh;
+
+    sh = (void*) (s - (sizeof(struct sdshdr)));
+
+    // 进行内存重分配，让 buf 的长度仅仅足够保存字符串内容
+    // T = O(n)
+    sh = zrealloc(sh, sizeof(struct sdshdr) + sh->len + 1);
+
+    // 设置空余空间为 0
+    sh->free = 0;
+
+    return sh->buf;
+}
