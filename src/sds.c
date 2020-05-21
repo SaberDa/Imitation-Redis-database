@@ -102,3 +102,18 @@ sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
     return sdsnewlen(init, initlen);
 }
+
+/*
+ * 复制给定的 sds 副本
+ * 
+ * 返回值：
+ *  sds： 创建成功返回输入 sds 的副本
+ *        创建失败返回 NULL
+ * 
+ * T = O(n)
+ * 
+ * Duplicate an sds string
+*/
+sds sdsdup(const sds s) {
+    return sdsnewlen(s, sdslen(s));
+}
