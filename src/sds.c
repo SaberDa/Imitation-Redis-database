@@ -435,3 +435,20 @@ sds sdscalen(sds s, const void *t, size_t len) {
     // 返回新的 sds
     return s;
 }
+
+/*
+ * 将给定字符串 t 追加到 sds 的末尾
+ * 
+ * 返回值：
+ *  sds：追加成功返回新 sds， 失败返回NULL
+ * 
+ * T= O(N)
+ * 
+ * Append the specified null termianted C string to the sds string 's'
+ * 
+ * After the call, the passed sds string is no longer valid and all the 
+ * reference must be substituted with the new pointer returned by the call
+*/
+sds sdscat(sds s, const char *t) {
+    return sdscalen(s, t, strlen(t));
+}
