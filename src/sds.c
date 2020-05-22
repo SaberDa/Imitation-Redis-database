@@ -389,3 +389,49 @@ sds sdsgrowzero(sds s, size_t len) {
     // 返回新的sds
     return s;
 }
+
+/*
+ * 将长度为 len 的字符串 t 追加到 sds 的字符串末尾
+ * 
+ * 返回值：
+ *  sds: 追加成功返回新的sds，失败返回NULL
+ * 
+ * T = O(N)
+ * 
+ * Append the specified binary-safe string pointed by 't' of 'len' bytes
+ * to the end of the specified sds string 's'
+ * 
+ * After the call, the passed sds string is no longer valid and all the 
+ * reference must be substituted with the new pointer returned by the call
+*/
+
+sds sdscalen(sds s, const void *t, size_t len) {
+    struct sdshdr *sh;
+
+    // 原先字符串长度
+    size_t curlen = sdslen(s);
+
+    // 扩展 sds 空间
+    // T = O(n)
+    s = sdsMakeRoomFor(s, len);
+
+    // 内存不足则直接返回NULL
+    if (s == NULL) {
+        return NULL;
+    }
+
+    // 复制 t 中内容到字符串后部
+    // T = O(n)
+    sh = (void*) (s - (sizeof(struct sdshdr)));
+    memcpy(s + curlen, t, len);
+
+    // 更新属性
+    sh->len = curlen + len;
+    sh->free = sh->free - len;
+
+    // 添加新的结尾符
+    s[curlen + len] = '\0';
+
+    // 返回新的 sds
+    return s;
+}
