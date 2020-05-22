@@ -452,3 +452,21 @@ sds sdscalen(sds s, const void *t, size_t len) {
 sds sdscat(sds s, const char *t) {
     return sdscalen(s, t, strlen(t));
 }
+
+/*
+ * 将另一个 sds 追加到一个 sds 的末尾
+ * 
+ * 返回值：
+ *  sds：追加成功返回新的 sds，失败返回NULL
+ * 
+ * T = O(N)
+ * 
+ * Append the specified sds 't' to the existing sds 's'
+ * 
+ * After the call, the modified sds string is no longer valid and all 
+ * the references must be substituted with the new pointer returned
+ * by the call 
+*/
+sds sdscatsds(sds s, const sds t) {
+    return sdscalen(s, t, sdslen(t));
+}
