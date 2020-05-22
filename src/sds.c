@@ -341,3 +341,51 @@ void sdsIncrLen(sds s, int incr) {
     // 放置新的结尾符
     s[sh->len] = '\0';
 }
+
+/*
+ * Grow the sds to have the specified length. Bytes that were not part of 
+ * the original length of the sds will be set to zero
+ * 
+ * if the specified length is smaller than the current length, no operation
+ * is performed
+ * 
+ * 将sds扩充到指定长度，未使用的空间以 0 字节填充
+ * 
+ * 返回值：
+ *  sds: 扩充成功返回新的 sds，失败返回NULL
+ * 
+ * T = O(N)
+*/
+sds sdsgrowzero(sds s, size_t len) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+    size_t totlen, curlen = sh->len;
+
+    // 如果len比字符串的现有长度小
+    // 那么直接返回，不做动作
+    if (len <= curlen) {
+        return s;
+    }
+
+    // 扩展 sds
+    // T = O(N)
+    s = sdsMakeRoomFor(s, len-curlen);
+
+    // 如果内存不足，则直接返回
+    if (s == NULL) {
+        return NULL;
+    }
+
+    // Make sure added region doesn't contain garbage
+    // 将新分配的空间用0填充，防止出现垃圾内容
+    // T = O(N)
+    sh = (void*) (s - (sizeof(struct sdshdr)));
+    memset(s + curlen, 0, (len - curlen + 1));
+
+    // 更新属性
+    totlen = sh->len + sh->free;
+    sh->len = len;
+    sh->free = totlen - sh->len;
+
+    // 返回新的sds
+    return s;
+}
