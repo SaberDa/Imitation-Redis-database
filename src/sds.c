@@ -271,3 +271,21 @@ sds sdsRemoveFreeSpace(sds s) {
 
     return sh->buf;
 }
+
+/*
+ * 返回给定 sds 分配的内存字节数
+ * 
+ * T = O(1)
+ * 
+ * Return the total size of the allocation of the specifed sds string
+ * including:
+ * 1) The sds header before the pointer
+ * 2) The string
+ * 3) The free buffer at the end if any
+ * 4) The implicit null term
+*/
+size_t sdsAllocSize(sds s) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+    return sizeof(*sh) + sh->len + sh->free + 1;
+}
+
