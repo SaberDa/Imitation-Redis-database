@@ -289,3 +289,55 @@ size_t sdsAllocSize(sds s) {
     return sizeof(*sh) + sh->len + sh->free + 1;
 }
 
+/*
+ * 根据 incr 参数，增加sds 的长度，缩减空余空间
+ * 并将 '\0' 放到新字符串的尾端
+ * 
+ * 这个函数是在调用 sdsMakeRoomFor() 对字符串进行扩展，
+ * 然后用户在字符串尾部写入了某些内容后
+ * 用来正确更新 free 和 len 属性 
+ * 
+ * 如果 incr 为负数，那么对字符串进行右截断操作
+ * 
+ * T = O(1)
+ * 
+ * increment the sds length and decrements the left free space at the 
+ * end of the string according to 'incr'. Also set the null term in the 
+ * new end of the string
+ * 
+ * This function is used in order to fix the string length after the 
+ * user calls sdsMakeRoomFor(), writes something after the end of the 
+ * current string, and finally needs to set the length
+ * 
+ * Note: it is possible to use a negative increment in order to 
+ * right-trim the string
+ * 
+ * Usage example:
+ * 
+ * Using sdsIncrLen() and sdsMakeRoomFor() it is possible to mount the 
+ * following schems, to cat bytes coming from the kernel to the end of an
+ * sds string without copying into an intermediate buffer:
+ * 
+ * oldlen = sdslen(s);
+ * s = sdsMakeRoomFor(s, BUFFER_SIZE);
+ * nread = read(fp, s + oldlen, BUFFER_SIZE);
+ * ... check for nread <= 0 and handle it ...
+ * sdsIncrLen(s, nread); 
+*/
+void sdsIncrLen(sds s, int incr) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+
+    // 确保 sds 空间足够
+    assert(sh->free >= incr);
+
+    // 更新属性
+    sh->len += incr;
+    sh->free -= incr;
+
+    // 这个assert可以忽略
+    // 因为前一个assert已经确保 sh->free - incr >= 0 了
+    assert(sh->free >= 0);
+
+    // 放置新的结尾符
+    s[sh->len] = '\0';
+}
