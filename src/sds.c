@@ -541,6 +541,8 @@ sds sdscpy(sds s, const char *t) {
  * 
  * The function returns the length of the null-terminated string representation 
  * stored at 's'
+ * 
+ * return the generated string length
  */
 #define SDS_LLSTR_SIZE 21
 int sdsll2str(char *s, long long value) {
@@ -562,6 +564,40 @@ int sdsll2str(char *s, long long value) {
     }
 
     // Compute length and add null term
+    l = p - s;
+    *p = '\0';
+
+    // Reverse the string
+    p--;
+    while (s < p) {
+        aux = *s;
+        *s = *p;
+        *p = aux;
+        s++;
+        p--;
+    }
+    return l;
+}
+
+/*
+ * Identical sdsll2str(), but for unsigned long long type
+ * 
+ * return the generated string length
+*/
+int sdsull2str(char *s, unsigned long long v) {
+    char *p;
+    char aux;
+    size_t l;
+
+    // Generate the string representation, this method produces
+    // an reversed string
+    p = s;
+    do {
+        *p++ = '0' + (v % 10);
+        v /= 10;
+    } while (v);
+
+    // Compute the length and add null term
     l = p - s;
     *p = '\0';
 
