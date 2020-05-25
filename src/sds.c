@@ -470,3 +470,49 @@ sds sdscat(sds s, const char *t) {
 sds sdscatsds(sds s, const sds t) {
     return sdscalen(s, t, sdslen(t));
 }
+
+/*
+ * 将字符串 t 的前 len 个字符复制到 sds 中
+ * 并在字符串的最后添加终结符
+ * 
+ * 如果 sds 的长度少于 len 个字符，则扩展 sds
+ * 
+ * 返回值：
+ *  sds : 复制成功返回新的sds，失败则返回 NULL
+ * 
+ * T = O(N)
+ * 
+ * Destructively modify the sds string 's' to hold the specificed binary
+ * safe string pointed by 't' of length of 'len' bytes
+*/
+sds sdscpylen(sds s, const char *t, size_t len) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+
+    // sds 现有的长度
+    size_t totlen = sh->len + sh->free;
+
+    // 如果 s 的 buf 长度不满足 len，则扩展
+    if (totlen < len) {
+        // T = O(N)
+        s = sdsMakeRoomFor(s, len - sh->len);
+        if (s == NULL) {
+            return NULL;
+        }
+        sh = (void*) (s - (sizeof(struct sdshdr)));
+        totlen = sh->free + sh->len;
+    }
+
+    // 复制内容
+    // T= O(N)
+    memcpy(s, t, len);
+
+    // 添加终结符
+    s[len] = '\0';
+
+    // 更新属性
+    sh->len = len;
+    sh->free = totlen - len;
+
+    // 返回新的 sds
+    return s;
+}
