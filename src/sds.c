@@ -516,3 +516,21 @@ sds sdscpylen(sds s, const char *t, size_t len) {
     // 返回新的 sds
     return s;
 }
+
+/*
+ * 将字符串复制到 sds 当中
+ * 覆盖原有的字符
+ * 
+ * 如果 sds 的长度少于字符串的长度，那么扩展 sds
+ * 
+ * 返回值
+ *  sds: 成功返回新的 sds，失败返回NULL
+ * 
+ * T = O(N)
+ * 
+ * Like sdscpylen(), but 't' must be a null-termined string so that the length
+ * of the string is obtained with strlen()
+*/
+sds sdscpy(sds s, const char *t) {
+    return sdscpylen(s, t, strlen(t));
+}
