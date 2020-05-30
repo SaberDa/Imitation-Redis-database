@@ -612,3 +612,18 @@ int sdsull2str(char *s, unsigned long long v) {
     }
     return l;
 }
+
+/*
+ * Create an sds string from a long long value.
+ * It is much master than:
+ * 
+ * sdscatprintf(sdsempty(), "%lld\n", value);
+ * 
+ * 根据输入的 long long 值，创建一个 sds
+*/
+sds sdsfromlonglong(long long value) {
+    char buf[SDS_LLSTR_SIZE];
+    int len = sdsll2str(buf, value);
+
+    return sdsnewlen(buf, len);
+}
