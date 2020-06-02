@@ -932,3 +932,18 @@ void sdsrange(sds s, int start, int end){
     sh->free = sh->free + (sh->len - newlen);
     sh->len = newlen;
 }
+
+/*
+ * 将 sds 字符串中的所有字符转换为小写
+ * 
+ * T = O(N)
+ * 
+ * Apply tolower() to every character of the sds string 's'
+*/
+void sdstolower(sds s) {
+    int len = sdslen(s), j;
+    for (j = 0; j < len; j++) {
+        s[j] = tolower(s[j]);
+    }
+}
+
