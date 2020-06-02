@@ -947,3 +947,16 @@ void sdstolower(sds s) {
     }
 }
 
+/*
+ * 将 sds 字符串中的所有字符转换为大写
+ * 
+ * T = O(N)
+ * 
+ * Apply toupper() to every character of the sds string 's'
+*/
+void sdstoupper(sds s) {
+    int len = sdslen(s);
+    for (int j = 0; j < len; j++) {
+        s[j] = toupper(s[j]);
+    }
+}
