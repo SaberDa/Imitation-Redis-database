@@ -824,3 +824,47 @@ sds sdscatfmt(sds s, char const *fmt, ...) {
     s[i] = '\0';
     return s;
 }
+
+/*
+ * 对 sds 两端进行修剪，清除其中 cset 指定的所有字符
+ * 
+ * 比如 sdstrim(xxyyabcyyxy, "xy") 将返回 "abc"
+ * 
+ * T = O(M * N)，其中 M 为 sds 长度， N 为 cset 长度
+ * 
+ * Remove the part of the string from left and from right composed just of
+ * contiguous characters found in 'cset', that is a null terminted C string
+ * 
+ * After the call, the modified sds string is no longer valid and all the 
+ * references must be substituted with the new pointer returned by the call
+*/
+sds sdstrim(sds s, const char* cset) {
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+    char *start, *end, *sp, *ep;
+    size_t len;
+
+    // 设置和记录指针
+    sp = start = s;
+    ep = end = s + sdslen(s) - 1;
+
+    // 修剪，T = O(N^2)
+    while (sp <= end && strchr(cset, *sp)) sp++;
+    while (ep > start && strchr(cset, *ep)) ep--;
+
+    // 计算 trim 完毕之后剩余的字符串长度
+    len = (sp > ep) ? 0 : ((ep - sp) + 1);
+
+    // 如果有需要，前移字符串内容
+    // T = O(N)
+    if (sh->buf != sp) memmove(sh->buf, sp, len);
+
+    // 添加终结符
+    sh->buf[len] = '\0';
+
+    // 更新属性
+    sh->free = sh->free + (sh->len - len);
+    sh->len = len;
+
+    // 返回修剪后的 sds
+    return s;
+}
