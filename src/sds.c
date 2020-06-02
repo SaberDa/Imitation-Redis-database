@@ -868,3 +868,67 @@ sds sdstrim(sds s, const char* cset) {
     // 返回修剪后的 sds
     return s;
 }
+
+/*
+ * 按索引对截取 sds 字符串的其中一段
+ * start 和 end 都是闭区间
+ * 
+ * 索引从 0 开始，最大为 sdslen(s) - 1
+ * 索引可以是负数，sdslen(s) - 1 == -1
+ * 
+ * T = O(N)
+ * 
+ * Turn the string into a smaller (or equal) string containing only the 
+ * substring specified by the 'start' and 'end' indexes
+ * 
+ * start and end can be negative, where -1 means the last character of the 
+ * string, -2 the penultimate character, and so forth
+ * 
+ * The interval is inclusive, so the start and end characters will be part 
+ * of the resulting string
+ * 
+ * The string is modified in-place
+*/
+void sdsrange(sds s, int start, int end){
+    struct sdshdr *sh = (void*) (s - (sizeof(struct sdshdr)));
+    size_t newlen, len = sdslen(s);
+    if (len == 0) {
+        return;
+    }
+    if (start < 0) {
+        start = len + start;
+        if (start < 0) {
+            start = 0;
+        }
+    }
+    if (end < 0) {
+        end = len + end;
+        if (end < 0) {
+            end = 0;
+        }
+    }
+    newlen = (start > end) ? 0 : (end - start) + 1;
+    if (newlen != 0) {
+        if (start >= (signed)len) {
+            newlen = 0;
+        } else if (end >= (signed)len) {
+            end = len - 1;
+            newlen = (start > end) ? 0 : (end-start) + 1;
+        }
+    } else {
+        start = 0;
+    }
+
+    // 如果有需要，对字符串进行移动
+    // T = O(N)
+    if (start && newlen) {
+        memmove(sh->buf, sh->buf + start, newlen);
+    }
+
+    // add null term
+    sh->buf[newlen] = 0;
+
+    // 更新属性
+    sh->free = sh->free + (sh->len - newlen);
+    sh->len = newlen;
+}
