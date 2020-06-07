@@ -994,3 +994,98 @@ int sdscmp(const sds s1, const sds s2) {
 
     return cmp;
 }
+
+/*
+ * 使用分隔符 sep 对 s 进行分割，返回一个 sds 字符串的数组
+ * *count 会被设置为返回数组元素的数量
+ * 
+ * 如果出现内存不足、字符串长度为 0 或者分隔符长度为 0 的情况，
+ * 返回 NULL
+ * 
+ * 注意分隔符可以是包含多个字符的字符串
+ * 
+ * 这个函数接受 len 参数，因为它是二进制安全的。
+ * 文档中提到的 sdssplit() 已废弃
+ * 
+ * T = O(N ^ 2)
+ * 
+ * Split 's' with separator in 'sep'. An array of sds 
+ * strings is returned. *count will be set by reference
+ * to the number of tokens returned.
+ * 
+ * On out of memory, zero length string, zero length of 
+ * separator, NULL is returned.
+ * 
+ * Note the 'sep' is able to split a string using a 
+ * multi-character sparator. For example, 
+ * sdssplit("foo_-_bar", "_-_"); will return two elements 
+ * "foo" and "bar"
+ * 
+ * This version of the function is binary-safe but requires
+ * length arguments. sdssplit() is just the same function 
+ * but for zero-terminated strings
+*/
+sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count) {
+    int elements = 0, slots = 0, start = 0, j;
+    sds *tokens;
+
+    if (seplen < 1 || len == 0) {
+        return NULL;
+    }
+
+    tokens = zmalloc(sizeof(sds)*slots);
+    if (tokens == NULL) {
+        return NULL;
+    }
+
+    if (len == 0) {
+        *count = 0;
+        return NULL;
+    }
+
+    // T = O(N ^ 2)
+    for (j = 0; j < (len - (seplen - 1)); j++) {
+        // make sure there is room for the next element and the final one
+        if (slots < elements + 2) {
+            sds *newtoekns;
+
+            slots *= 2;
+            newtoekns - zrealloc(tokens, sizeof(sds)*slots);
+            if (newtoekns == NULL) {
+                goto cleanup;
+            }
+            tokens = newtoekns;
+        }
+        // search the separator
+        // T = O(N)
+        if ((seplen == 1 && *(s + j) == sep[0]) || (memcpy(s + j, sep, seplen) == 0)) {
+            tokens[elements] == sdsnewlen(s + start, j - start);
+            if (tokens[elements] == NULL) {
+                goto cleanup;
+            }
+            elements++;
+            start = j + seplen;
+            j = j + seplen - 1; // skip the separator
+        }
+    }
+
+    // add the final elements. We are sure there is room in the tokens array
+    tokens[elements] = sdsnewlen(s + start, len - start);
+    if (tokens[elements] == NULL) {
+        goto cleanup;
+    }
+    elements++;
+    *count = elements;
+    return tokens;
+    
+cleanup:
+    {
+        int i;
+        for (i = 0; i < elements; i++) {
+            sdsfree(tokens[i]);
+        }
+        zfree(tokens);
+        *count = 0;
+        return NULL;
+    }
+}
