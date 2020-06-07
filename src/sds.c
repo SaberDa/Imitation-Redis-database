@@ -1107,3 +1107,53 @@ void sdsfreesplitres(sds *tokens, int count) {
     }
     zfree(tokens);
 }
+
+/*
+ * 将长度为 len 的字符串 p 以带引号（quoted）的格式追加
+ * 到给定的 sds 末尾
+ * 
+ * T = O(N)
+ * 
+ * Append to the sds string "s" an escaped string representation where all
+ * the non-printable characters (tested with isprint()) are turned into 
+ * escapes in the form "\n\r\a..." or "\x<hex-number>"
+ * 
+ * After the call, the modified sds string is no longer valid and all the 
+ * references must be substituted with the new pointer returned by the call
+*/
+sds sdscatrepr(sds s, const char *p, size_t len) {
+    s = sdscalen(s, "\"", 1);
+
+    while (len--) {
+        switch(*p) {
+            case '\\':
+            case '"':
+                s = sdscatprintf(s, "\\%c", *p);
+                break;
+            case '\n':
+                s = sdscalen(s, "\\n", 2);
+                break;
+            case '\r':
+                s = sdscalen(s, "\\r", 2);
+                break;
+            case '\t':
+                s = sdscalen(s, "\\t", 2);
+                break;
+            case '\a':
+                s = sdscalen(s, "\\a", 2);
+                break;
+            case '\b':
+                s = sdscalen(s, "\\b", 2);
+                break;
+            default:
+                if (isprint(*p)) {
+                    s = sdscatprintf(s, "%c", *p);
+                } else {
+                    s = sdscatprintf(s, "\\x%02x", (unsigned char)*p);
+                }
+                break;
+        }
+        p++;
+    }
+    return sdscalen(s, "\"", 1);
+}
