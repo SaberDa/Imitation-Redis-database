@@ -1077,7 +1077,7 @@ sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count
     elements++;
     *count = elements;
     return tokens;
-    
+
 cleanup:
     {
         int i;
@@ -1088,4 +1088,22 @@ cleanup:
         *count = 0;
         return NULL;
     }
+}
+
+/*
+ * 释放 tokens 数组中 count 个 sds
+ * 
+ * T = O(N ^ 2)
+ * 
+ * Free the result returned by sdssplitlen(), or doing nothing
+ * if 'tokens' is NULL
+*/ 
+void sdsfreesplitres(sds *tokens, int count) {
+    if (!tokens) {
+        return;
+    }
+    while (count--) {
+        sdsfree(tokens[count]);
+    }
+    zfree(tokens);
 }
