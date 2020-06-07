@@ -1157,3 +1157,16 @@ sds sdscatrepr(sds s, const char *p, size_t len) {
     }
     return sdscalen(s, "\"", 1);
 }
+
+/*
+ * 如果 c 为十六进制符号中的一个，返回正数
+ * 
+ * Helper function for sdssplitargs() that returns non zero if 'c'
+ * is a valid hex digit
+ * 
+ * T = O(1)
+*/
+int is_hex_digit(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+           (c >= 'A' && c <= 'F');
+}
