@@ -1200,3 +1200,162 @@ int hex_digit_to_int(char c) {
         default: return 0;
     }
 }
+
+/*
+ * 将一行文本分割成多个参数，每个参数可以有一下的类编程语言 REPL 格式。
+ * 
+ * 参数的个数会保存在 *argc 中，函数返回一个 sds 数组。
+ * 
+ * 调用者应该使用 sdsfreesplitres() 来释放函数返回 sds 数组。
+ * 
+ * sdscatrepr() 可以将一个字符串转换为一个带引号 (quoted) 的字符串，
+ * 这个带引号的字符串可以被 sdssplitargs() 分析。
+ * 
+ * 即使输入出现空字符，NULL，或者输入带有未对应的括号，
+ * 函数都会将成功处理的字符串预先返回
+ * 
+ * 这个函数主要用于 config.c 中对配置文件进行分析
+ * 
+ * 例子：
+ *  sds *arr = sdssplitargs("timeout 10086\r\nport 123321\r\n");
+ * 会得出：
+ *  arr[0] = "timeout"
+ *  arr[1] = "10086"
+ *  arr[2] = "port"
+ *  arr[3] = "123321"
+*/
+/*
+ * Split a line into arguments, where every argument can be in the 
+ * following programming-language REPL-alike form:
+ * 
+ * foo bar "newline are supported\n" and "\xff\x00otherstuff"
+ * 
+ * The number of arguments is stored into *argc, and an array
+ * of sds is returned
+ * 
+ * The caller should free the resulting array of sds strings with
+ * sdsfreespliters()
+ * 
+ * Note that sdscatrepr() is able to convert back a string into 
+ * a quoted string in the same format sdssplitargs() is able to parse
+ * 
+ * The function returns the allocated tokens on success, even when the 
+ * input string is empty, or NULL if the input contains unbalanced 
+ * quotes or closed quotes followed by non space characters as in :
+ * "foo"bar or "foo'
+ * 
+ * T = O(N ^ 2)
+*/ 
+sds *sdssplitargs(const char *line, int *argc) {
+    const char *p = line;
+    char *current = NULL;
+    char **vector = NULL;
+
+    *argc = 0;
+    while (1) {
+
+        /*skip blanks*/
+        // T = O(N)
+        while (*p && isspace(*p)) p++;
+
+        if (*p) {
+            /*get a token*/
+            int inq = 0;    // set to 1 if we are in "quotes"
+            int insq = 0;   // set to 1 if we are in 'single quotes'
+            int done = 0;
+
+            if (current == NULL) current = sdsempty();
+            
+            // T = O(N)
+            while (!done) {
+                if (inq) {
+                    if (*p == '\\' && *(p + 1) == 'x' &&
+                                            is_hex_digit(*(p + 2)) &&
+                                            is_hex_digit(*(p + 3))) {
+                        unsigned char byte ;
+
+                        byte = (hex_digit_to_int(*(p + 2)) * 16) + 
+                                hex_digit_to_int(*(p + 3));
+                        current = sdscatlen(current, (char*)&byte, 1);
+                        p += 3;
+                    } else if (*p == '\\' && *(p +1)) {
+                        char c;
+
+                        p++;
+                        switch(*p) {
+                            case 'n': c = '\n'; break;
+                            case 'r': c = '\r'; break;
+                            case 't': c = '\t'; break;
+                            case 'b': c = '\b'; break;
+                            case 'a': c = '\a'; break;
+                            default: c = *p; break;
+                        }
+                        current = sdscatlen(current, &c, 1);
+                    } else if (*p == '"') {
+                        /* closing quote must be followed by a space or
+                         * nothing at all*/
+                        if (*(p + 1) && !isspace(*(p + 1))) goto err;
+                        done = 1;
+                    } else if (!*p) {
+                        /* unterminated quotes*/
+                        goto err;
+                    } else {
+                        current = sdscatlen(current, p, 1);
+                    }
+                } else if (insq) {
+                    if (*p == '\\' && *(p + 1) == '\'') {
+                        p++;
+                        current = sdscatlen(current, "'", 1);
+                    } else if (*p == '\'') {
+                        /* clothing quote must be followed by a apace or
+                         * nothing at all */
+                        if (*(p + 1) && !isspace(*(p + 1))) goto err;
+                        done = 1;
+                    } else if (!*p) {
+                        /* unterminated quotes*/
+                        goto err;
+                    } else {
+                        current = sdscatlen(current, p, 1);
+                    }
+                } else {
+                    switch (*p) {
+                        case ' ':
+                        case '\n':
+                        case '\r':
+                        case '\t':
+                        case '\0':
+                            done = 1;
+                            break;
+                        case '"':
+                            inq = 1;
+                            break;
+                        case '\'':
+                            insq = 1;
+                            break;
+                        default:
+                            current = sdscatlen(current, p, 1);
+                            break;
+                    }
+                }
+                if (*p) p++;
+            }
+            /* add the token to the vector*/
+            // T = O(N)
+            vector = zrealloc(vector, ((*argc) + 1)*sizeof(char*));
+            vector[*argc] = current;
+            (*argc)++;
+            current = NULL;
+        } else {
+            /* Even on empty input string return something not NULL*/
+            if (vector == NULL) vector = zmalloc(sizeof(void*));
+            return vector;
+        }
+    }
+err:
+    while ((*argc)--)
+        sdsfree(vector[*argc]);
+    zfree(vector);
+    if (current) sdsfree(current);
+    *argc = 0;
+    return NULL;
+}
