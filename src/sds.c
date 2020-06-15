@@ -1359,3 +1359,39 @@ err:
     *argc = 0;
     return NULL;
 }
+
+/*
+ * 将字符串 s 中，所有在 from 中出现的字符，替换成 to 中的字符
+ * 
+ * 比如调用 sdsmapchars(mystring, "ho", "01", 2)，
+ * 就会将 "hello" 转换为 "0ell1"
+ * 
+ * 因为无须对 sds 进行大小调整，
+ * 所以返回的 sds 和输入的 sds 一样
+*/
+/*
+ * Modify the string substituting all the occurrences of the set of 
+ * characters specified in the 'from' string to the corresponding 
+ * character in the 'to' array
+ * 
+ * The function returns the sds string pointers, that is always the same
+ * as the input pointer since no resize is needed
+ * 
+ * T = O(N^2)
+*/
+sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen) {
+    size_t j, i, l = sdslen(s);
+
+    // 遍历输入字符串
+    for (j = 0; j < l; j++) {
+        // 遍历映射
+        for (i = 0; i < setlen; i++) {
+            // 替换字符串
+            if (s[j] == from[i]) {
+                s[j] = to[i];
+                break;
+            }
+        }
+    }
+    return s;
+}
