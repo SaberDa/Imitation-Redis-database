@@ -81,4 +81,11 @@ void listRewind(list *list, listIter *li);
 void listRewindTail(list *list, listIter *li);
 void listRotate(list *list);
 
+
+/* Direction for iterators */
+// 迭代器进行迭代的方向
+
+#define AL_START_HEAD 0     // 从表头向表尾进行迭代
+#define AL_START_TAIL 1     // 从表尾向表头进行迭代
+
 #endif /* __ADLIST_H__ */
