@@ -11,10 +11,15 @@ typedef struct listNode {
     struct listNode *prev;      // 前置结点
     struct listNode *next;      // 后置结点
     void *value;                // 结点的值
-    
+
 } listNode;
 
+typedef struct listIter {
 
+    listNode *next;             // 当前迭代到的结点
+    int direction;              // 迭代的方向
+
+} listIter;
 
 
 
