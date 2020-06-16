@@ -62,4 +62,23 @@ typedef struct list {
 #define listGetFree(l) ((l)->free)                  // 返回给定链表的值释放函数
 #define listGetMatchMethod(l) ((l)->match)          // 返回给定链表的值对比函数
 
+
+/* Prototypes */
+
+list *listCreate(void);
+void listRelease(list *list);
+list *listAddNodeHead(list *list, void *value);
+list *listAddNodeTail(list *list, void *value);
+list *listInsertNode(list *list, listNode *old_node, void *value, int after);
+void listDelNode(list *list, listNode *node);
+listIter* listGetIterator(list *list, int direction);
+listNode *listNext(listIter *iter);
+void listReleaseIterator(listIter *iter);
+list *listDup(list *orig);
+listNode *listSearchKey(list *list, void *key);
+listNode *listIndex(list *list, listIter *li);
+void listRewind(list *list, listIter *li);
+void listRewindTail(list *list, listIter *li);
+void listRotate(list *list);
+
 #endif /* __ADLIST_H__ */
