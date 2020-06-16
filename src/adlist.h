@@ -14,6 +14,10 @@ typedef struct listNode {
 
 } listNode;
 
+
+/*
+ * 双端链表迭代器
+*/
 typedef struct listIter {
 
     listNode *next;             // 当前迭代到的结点
@@ -21,6 +25,10 @@ typedef struct listIter {
 
 } listIter;
 
+
+/*
+ * 双端链表结构
+*/
 typedef struct list {
 
     listNode *head;             // 头结点
@@ -34,5 +42,24 @@ typedef struct list {
 
 } list;
 
+
+/* Function implemented as macros*/
+// T = O(1)
+
+#define listLength(l) ((l)->len)        // 返回给定链表所包含的结点数量
+#define listFirst(l) ((l)->head)        // 返回给定链表的表头结点
+#define listLast(l) ((l)->tail)         // 返回给定链表的表尾结点
+
+#define listPrevNode(n) ((n)->prev)     // 返回给定结点的前置结点
+#define listNextNode(n) ((n)->next)     // 返回给定结点的后置结点
+#define listNodeValue(n) ((n)->value)   // 返回给定结点的值
+
+#define listSetDupMethod(l, m) ((l)->dup = (m))     // 将链表 l 的值复制函数设置为 m
+#define listSetFreeMethod(l, m) ((l)->free = (m))   // 将链表 l 的值释放函数设置为 m
+#define listSetMatchMethod(l, m) ((l)->match = (m)) // 将链表 l 的值比较函数设置为 m
+
+#define listGetDupMethod(l) ((l)->dup)              // 返回给定链表的值复制函数
+#define listGetFree(l) ((l)->free)                  // 返回给定链表的值释放函数
+#define listGetMatchMethod(l) ((l)->match)          // 返回给定链表的值对比函数
 
 #endif /* __ADLIST_H__ */
