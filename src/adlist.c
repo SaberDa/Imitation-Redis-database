@@ -28,7 +28,38 @@ list *listCreate(void) {
 
     return list;
 }
-void listRelease(list *list);
+
+/* Free the whole list.
+ * This function can't fail.
+*/
+/*
+ * 释放整个链表，以及链表中所有结点
+ * 
+ * T = O(N)
+*/
+void listRelease(list *list) {
+    unsigned long len;
+    listNode *current, *next;
+
+    current = list->head;       // 指向头结点
+    len = list->len;            // 当前链表长度
+
+    // 遍历整个链表
+    while (len--) {
+        next = current->next;
+
+        // 如果有设置释放函数，执行
+        if (list->free) list->free(current->value);
+
+        // 释放结点
+        zfree(current);
+
+        current = next;
+    }
+
+    // 释放链表
+    zfree(list);
+}
 list *listAddNodeHead(list *list, void *value);
 list *listAddNodeTail(list *list, void *value);
 list *listInsertNode(list *list, listNode *old_node, void *value, int after);
