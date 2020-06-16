@@ -21,6 +21,18 @@ typedef struct listIter {
 
 } listIter;
 
+typedef struct list {
+
+    listNode *head;             // 头结点
+    listNode *tail;             // 尾结点
+
+    void *(*dup)(void *ptr);    // 结点值复制函数
+    void (*free)(void *ptr);    // 结点值释放函数
+    int (*match)(void *ptr, void *key);     // 结点值比较函数
+
+    unsigned long len;          // 链表所包含的结点数量
+
+} list;
 
 
 #endif /* __ADLIST_H__ */
