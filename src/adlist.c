@@ -60,7 +60,51 @@ void listRelease(list *list) {
     // 释放链表
     zfree(list);
 }
-list *listAddNodeHead(list *list, void *value);
+
+/* Add a new node to the list, to head contaning the specified 'value' 
+ * pointer as value
+ * 
+ * On error, NULL is returned and no operation is performed 
+ * (i.e. the list remains unaltered)
+ * 
+ * On success the 'list' pointer you pass to the function is returned.
+*/
+/*
+ * 将一个包含有给定值指针 value 的新结点添加到链表的表头
+ * 
+ * 如果为新结点分配内存出错，那么不执行任何动作，返回 NULL
+ * 
+ * 如果执行成功，返回传入的链表指针
+ * 
+ * T = O(1)
+*/
+list *listAddNodeHead(list *list, void *value) {
+    listNode *node;
+
+    // 为结点分配内存
+    if ((node == zmalloc(sizeof(*node))) == NULL) 
+        return NULL;
+    
+    // 保存值指针
+    node->value = value;
+
+    if (list->len == 0) {
+        // 添加结点到新链表
+        list->head = list->tail = node;
+        node->prev = node->next = NULL;
+    } else {
+        // 添加结点到非空链表
+        node->prev = NULL;
+        node->next = list->head;
+        list->head->prev = node;
+        list->head = node;
+    }
+
+    // 更新链表结点数
+    list->len++;
+
+    return list;
+}
 list *listAddNodeTail(list *list, void *value);
 list *listInsertNode(list *list, listNode *old_node, void *value, int after);
 void listDelNode(list *list, listNode *node);
