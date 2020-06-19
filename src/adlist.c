@@ -194,7 +194,44 @@ list *listInsertNode(list *list, listNode *old_node, void *value, int after) {
 
     return list;
 }
-void listDelNode(list *list, listNode *node);
+
+/*
+ * 从链表 list 中删除给定结点 node
+ * 对结点私有值的释放操作由调用者进行
+*/
+/*
+ * Remove the specified node from the specified list
+ * It's up to the caller to free the private value of the node
+ * 
+ * T = O(1)
+*/
+void listDelNode(list *list, listNode *node) {
+
+    // 调整前置结点指针
+    if (node->prev) {
+        node->prev->next = node->next;
+    } else {
+        list->head = node->next;
+    }
+
+    // 调整后置结点指针
+    if (node->next) {
+        node->next->prev = node->prev;
+    } else {
+        list->tail = node->prev;
+    }
+
+    // 释放值
+    if (list->free) {
+        list->free(node->value);
+    }
+
+    // 释放结点
+    zfree(node);
+
+    // 更新链表结点数
+    list->len--;
+}
 listIter* listGetIterator(list *list, int direction);
 listNode *listNext(listIter *iter);
 void listReleaseIterator(listIter *iter);
