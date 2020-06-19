@@ -321,7 +321,74 @@ listNode *listNext(listIter *iter) {
     return current;
 }
 
-list *listDup(list *orig);
+/*
+ * 复制整个链表
+ * 
+ * 复制成功返回输入链表的副本，
+ * 如果因为内存不足而造成复制失败，返回 NULL
+ * 
+ * 如果链表有设置复制函数 dup，那么对值的复制将使用复制函数进行
+ * 否则，新结点和旧结点共享一个指针
+ * 
+ * 无论复制是成功还是失败，输入结点都不会被改变
+*/
+/*
+ * Duplicate the whole list. On out of memory NULL is returned.
+ * On success a copy of the original list is returned.
+ * 
+ * The 'Dup' method set with listSetDupMethod() function is used
+ * to copy the node value. Otherwise the same pointer value of 
+ * the original node is used as value of the copied node
+ * 
+ * The original list both on success or error is never modified.
+ * 
+ * T = O(N)
+*/
+list *listDup(list *orig) {
+
+    list *copy;
+    listIter *iter;
+    listNode *node;
+
+    // 创建新链表
+    if ((copy = listCreate()) == NULL) return NULL;
+
+    // 设置结点值处理函数
+    copy->dup = orig->dup;
+    copy->free = orig->free;
+    copy->match = orig->match;
+
+    // 迭代整个输入链表
+    iter = listGetIterator(orig, AL_START_HEAD);
+    while ((node = listNext(iter)) != NULL) {
+        void *value;
+
+        // 复制结点值到新结点
+        if (copy->dup) {
+            value = copy->dup(node->value);
+            if (value == NULL) {
+                listRelease(copy);
+                listReleaseIterator(iter);
+                return NULL;
+            }
+        } else {
+            value = node->value;
+        }
+
+        // 将结点添加到链表
+        if (listAddNodeTail(copy, value) == NULL) {
+            listRelease(copy);
+            listReleaseIterator(iter);
+            return NULL;
+        }
+    }
+
+    // 释放迭代器
+    listReleaseIterator(iter);
+
+    // 返回副本
+    return copy;
+}
 listNode *listSearchKey(list *list, void *key);
 listNode *listIndex(list *list, listIter *li);
 
