@@ -148,7 +148,52 @@ list *listAddNodeTail(list *list, void *value) {
 
     return list;
 }
-list *listInsertNode(list *list, listNode *old_node, void *value, int after);
+
+
+list *listInsertNode(list *list, listNode *old_node, void *value, int after) {
+    listNode *node;
+
+    // 新建结点
+    if ((node = zmalloc(sizeof(*node))) == NULL) {
+        return NULL;
+    }
+
+    // 保存值
+    node->value = value;
+
+    if (after) {
+        // 将新结点添加到给定结点之后
+        node->prev = old_node;
+        node->next = old_node->next;
+        // 给定结点时原表尾结点
+        if (list->tail == old_node) {
+            list->tail = node;
+        }
+    } else {
+        // 将新结点添加到给定结点之前
+        node->next = old_node;
+        node->prev = old_node->prev;
+        // 给定结点是原表头结点
+        if (list->head == old_node) {
+            list->head = node;
+        }
+    }
+
+    // 更新新结点的前置指针
+    if (node->prev != NULL) {
+        node->prev->next = node;
+    }
+
+    // 更新新结点的后置指针
+    if (node->next != NULL) {
+        node->next->prev = node;
+    }
+
+    // 更新链表节点数
+    list->len++;
+
+    return list;
+}
 void listDelNode(list *list, listNode *node);
 listIter* listGetIterator(list *list, int direction);
 listNode *listNext(listIter *iter);
