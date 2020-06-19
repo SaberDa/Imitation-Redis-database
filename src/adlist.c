@@ -299,5 +299,18 @@ void listRewind(list *list, listIter *li) {
     li->next = list->head;
     li->direction = AL_START_HEAD;
 }
-void listRewindTail(list *list, listIter *li);
+
+/*
+ * 将迭代器的方向设置为 AL_START_TAIL
+ * 并将迭代器指针重新指向表尾结点
+*/
+/*
+ * Create an iterator in the list private iterator structure
+ * 
+ * T = O(1)
+*/
+void listRewindTail(list *list, listIter *li) {
+    li->next = list->tail;
+    li->direction = AL_START_TAIL;
+}
 void listRotate(list *list);
