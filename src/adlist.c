@@ -267,11 +267,26 @@ listIter* listGetIterator(list *list, int direction) {
 
     return iter;
 }
+
+/*
+ * 释放迭代器
+*/
+/*
+ * Release the iterator
+ * 
+ * T = O(1)
+*/
+void listReleaseIterator(listIter *iter) {
+    zfree(iter);
+}
+
 listNode *listNext(listIter *iter);
-void listReleaseIterator(listIter *iter);
+
 list *listDup(list *orig);
 listNode *listSearchKey(list *list, void *key);
 listNode *listIndex(list *list, listIter *li);
+
+
 void listRewind(list *list, listIter *li);
 void listRewindTail(list *list, listIter *li);
 void listRotate(list *list);
