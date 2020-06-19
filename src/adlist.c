@@ -280,7 +280,46 @@ void listReleaseIterator(listIter *iter) {
     zfree(iter);
 }
 
-listNode *listNext(listIter *iter);
+/*
+ * 返回迭代器当前所指向的结点
+ * 
+ * 删除当前结点是允许的，但是不能改变链表内的其他结点
+ * 
+ * 函数要么返回一个结点，要么返回 NULL
+*/
+/*
+ * Retrun the next element of an iterator.
+ * It's valid to remove the currently returned element using 
+ * listDelNode(), but not to remove other elements
+ * 
+ * The function returns a pointer to the next element of the list, 
+ * or NULL if there are no more elements, so the classical usage patter
+ * is:
+ * 
+ * iter = listGetIterator(list, <direction>);
+ * while ((node = listNext(iter)) != NULL) {
+ *      doSomethingWith(listNodeValue(node));
+ * }
+ * 
+ * T = O(1)
+*/
+listNode *listNext(listIter *iter) {
+
+    // 初始化指向当前结点指针的结点
+    listNode *current = iter->next;
+
+    if (current != NULL) {
+        // 根据方向选择下一个结点
+        if (iter->direction == AL_START_HEAD) 
+            // 保存下一个结点，房子当前结点被删除而造成指针丢失
+            iter->next = current->next;
+        else 
+            // 保存下一个结点，房子当前结点被删除而造成指针丢失
+            iter->next = current->prev;
+    }
+
+    return current;
+}
 
 list *listDup(list *orig);
 listNode *listSearchKey(list *list, void *key);
