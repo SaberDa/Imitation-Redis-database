@@ -242,6 +242,9 @@ void dictSetHashFunctionSeed(unsigned int initval);
 unsigned int dictGetHashFunctionSedd(void);
 unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, void *privdata);
 
-
+/* Hash table types */
+extern dictType dictTypeHeapStringCopyKey;
+extern dictType dictTypeHeapStrings;
+extern dictType dictTypeHeapStringCopyKetValue;
 
 #endif /* __DICT_H */
