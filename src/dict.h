@@ -42,4 +42,27 @@ typedef struct dictEntry {
 
 } dictEntry;
 
+/* 字典类型特定函数 */
+typedef struct dictType {
+
+    // 计算哈希值
+    unsigned int (*hashFunction)(const void *key);
+
+    // 复制键
+    void *(*keyDup)(void *privdata, const void *key);
+
+    // 复制值
+    void *(*valDup)(void *privdata, const void * obj);
+
+    // 对比键
+    int (*ketCompare)(void *privdata, const void *key1, const void *key2);
+
+    // 销毁键
+    int (*ketDestructor)(void *privdata, void *key);
+
+    // 销毁值
+    void (*valDestructor)(void *privdata, void *obj);
+
+} dictType;
+
 #endif /* __DICT_H */
