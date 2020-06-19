@@ -504,4 +504,29 @@ void listRewindTail(list *list, listIter *li) {
     li->next = list->tail;
     li->direction = AL_START_TAIL;
 }
-void listRotate(list *list);
+
+/*
+ * 取出链表的表尾结点，并将它移动打表头，成为新的表头结点
+*/
+/*
+ * Rotate the list removing the tail node and inserting it to the end
+ * 
+ * T = O(1)
+*/
+void listRotate(list *list) {
+    listNode *tail = list->tail;
+
+    if (listLength(list) <= 1) return;
+
+    /* Detach current tail */
+    // 取出表尾结点
+    list->tail = tail->prev;
+    list->tail->next = NULL;
+
+    /* Move it as head */ 
+    // 插入到表头
+    list->head->prev = tail;
+    tail->prev = NULL;
+    tail->next = list->head;
+    list->head = tail;
+}
