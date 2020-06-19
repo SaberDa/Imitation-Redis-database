@@ -232,7 +232,41 @@ void listDelNode(list *list, listNode *node) {
     // 更新链表结点数
     list->len--;
 }
-listIter* listGetIterator(list *list, int direction);
+
+/*
+ * 为给定链表创建一个迭代器
+ * 之后每次对这个迭代器调用 listNext 都返回迭代到的链表结点
+ * 
+ * direction 参数决定了迭代器的迭代方向
+ *  AL_START_HEAD 0     从表头向表尾进行迭代
+ *  AL_START_TAIL 1     从表尾向表头进行迭代
+*/
+/*
+ * Returns a list iterator 'iter'. After the initialization every
+ * call to listNext() will return the next element of the list
+ * 
+ * The function can't fail
+ * 
+ * T = O(1)
+*/
+listIter* listGetIterator(list *list, int direction) {
+
+    // 初始化迭代器
+    listIter *iter;
+    if ((iter = zmalloc(sizeof(*iter))) == NULL) return NULL;
+
+    // 根据迭代方向，设置迭代器的起始结点
+    if (direction == AL_START_HEAD) {
+        iter->next = list->head;
+    } else {
+        iter->next = list->tail;
+    }
+
+    // 记录迭代方向
+    iter->direction = direction;
+
+    return iter;
+}
 listNode *listNext(listIter *iter);
 void listReleaseIterator(listIter *iter);
 list *listDup(list *orig);
