@@ -88,4 +88,25 @@ typedef struct dictht {
 
 } dictht;
 
+/* 字典 */
+typedef struct dict {
+
+    // 类型特定函数
+    dictType *type;
+
+    // 私有数据
+    void *privdata;
+
+    // 哈希表
+    dictht ht[2];
+
+    // rehash 索引
+    // 当 rehash 不在进行时，值为 -1
+    int rehashidx;      // rehashing not in process if rehashidx == -1
+
+    // 目前正在运行的安全迭代器数量
+    int iterators;      // number of iterators currently running
+
+} dict;
+
 #endif /* __DICT_H */
