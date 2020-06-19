@@ -105,7 +105,49 @@ list *listAddNodeHead(list *list, void *value) {
 
     return list;
 }
-list *listAddNodeTail(list *list, void *value);
+
+/*
+ * 将一个包含给定值指针 value 的新结点添加到链表的表尾
+ * 如果为新结点分配内存出错，那么不执行任何动作，仅返回NULL
+ * 如果执行成功，返回传入的指针值
+*/
+/*
+ * Add a new node to the list, to tail, containing the specified 'valie'
+ * pointer as value
+ * 
+ * On error, NULL is returned and no operation is performed 
+ * (i.e. the list remains unaltered)
+ * On success the 'list' pointer you pass to the function is returned
+ * 
+ * T = O(1)
+*/
+list *listAddNodeTail(list *list, void *value) {
+    listNode *node;
+
+    // 为新结点分配内存
+    if ((node == zmalloc(sizeof(*node))) == NULL)
+        return NULL;
+    
+    // 保存值指针
+    node->value = value;
+
+    // 目标链表为空
+    if (list->len == 0) {
+        list->head = list->tail = node;
+        node->prev = node->next = NULL;
+    } else {
+        // 目标链表非空
+        node->prev = list->tail;
+        node->next = NULL;
+        list->tail->next = node;
+        list->tail = node;
+    }
+
+    // 更新链表结点数
+    list->len++;
+
+    return list;
+}
 list *listInsertNode(list *list, listNode *old_node, void *value, int after);
 void listDelNode(list *list, listNode *node);
 listIter* listGetIterator(list *list, int direction);
