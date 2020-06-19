@@ -443,7 +443,39 @@ listNode *listSearchKey(list *list, void *key) {
     // 未找到
     return NULL;
 }
-listNode *listIndex(list *list, listIter *li);
+
+/*
+ * 返回链表在给定索引上的值
+ * 
+ * 索引为 0 为起始，也可以是负数，-1 表示链表的最后一个结点，类推
+ * 
+ * 如果索引超出范围，返回NULL
+*/
+/*
+ * Return the element at the specified zero-based index
+ * where 0 is the head, 1 is the element next to head
+ * and so on. Negative integers are used in order to count
+ * from the tail, -1 is the last element, -2 is the penultimate 
+ * and so on. If the index os out of range NULL is returned
+ * 
+ * T = O(N)
+*/
+listNode *listIndex(list *list, long index) {
+    listNode *node;
+    
+    if (index < 0) {
+        // 如果索引为负数，从表尾开始查找
+        index = (-index) - 1;
+        node = list->tail;
+        while (index-- && node) node = node->prev;
+    } else {
+        // 如果索引为正数，从表头开始查找
+        node = list->head;
+        while (index-- && node) node = node->next;
+    }
+
+    return node;
+}
 
 /*
  * 将迭代器的方向设置为 AL_START_HEAD
