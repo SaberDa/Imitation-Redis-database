@@ -221,30 +221,30 @@ dictEntry *dictReplaceRaw(dict *d, void *key);
 int dictDelete(dict *d, const void *key);
 int dictDeleteNoFree(dict *d, const void *key);
 void dictRelease(dict *d);
-dictEntry *dictFind(dict *d, const void *key);
-void *dicFetchValue(dict *d, const void *key);
+dictEntry * dictFind(dict *d, const void *key);
+void *dictFetchValue(dict *d, const void *key);
 int dictResize(dict *d);
 dictIterator *dictGetIterator(dict *d);
-dictIterator *dictGetSafeIterator(dict * d);
+dictIterator *dictGetSafeIterator(dict *d);
 dictEntry *dictNext(dictIterator *iter);
 void dictReleaseIterator(dictIterator *iter);
-dictEntry *dictGetRandomKey(dict* d);
+dictEntry *dictGetRandomKey(dict *d);
 int dictGetRandomKeys(dict *d, dictEntry **des, int count);
 void dictPrintStats(dict *d);
-unsigned int dictGetHashFunction(const void *key, int len);
+unsigned int dictGenHashFunction(const void *key, int len);
 unsigned int dictGenCaseHashFunction(const unsigned char *buf, int len);
-void dictEmpty(dict *t, void(callback)(void*));
+void dictEmpty(dict *d, void(callback)(void*));
 void dictEnableResize(void);
 void dictDisableResize(void);
 int dictRehash(dict *d, int n);
 int dictRehashMilliseconds(dict *d, int ms);
 void dictSetHashFunctionSeed(unsigned int initval);
-unsigned int dictGetHashFunctionSedd(void);
+unsigned int dictGetHashFunctionSeed(void);
 unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, void *privdata);
 
 /* Hash table types */
 extern dictType dictTypeHeapStringCopyKey;
 extern dictType dictTypeHeapStrings;
-extern dictType dictTypeHeapStringCopyKetValue;
+extern dictType dictTypeHeapStringCopyKeyValue;
 
 #endif /* __DICT_H */
