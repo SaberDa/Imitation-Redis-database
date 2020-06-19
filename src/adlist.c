@@ -389,7 +389,60 @@ list *listDup(list *orig) {
     // 返回副本
     return copy;
 }
-listNode *listSearchKey(list *list, void *key);
+
+/*
+ * 查找链表 list 中值和 key 匹配的结点
+ * 
+ * 对比操作由链表的 match 函数进行负责进行，
+ * 如果没有设置 match 函数，
+ * 那么直接通过对比值的指针来决定是否匹配
+ * 
+ * 如果匹配成功，那么第一个匹配的结点会被返回
+ * 如果失败，则返回 NULL
+*/
+/*
+ * Search the list for a node matching a given key.
+ * The match is performed using the 'match' method
+ * set with listSetMatchMethod(). If no 'match' method
+ * is set, the 'value' pointer of every node is directly 
+ * compared with the 'key' pointer
+ * 
+ * On success the first matching node pointer is returned
+ * (search starts from head). If no matching node exists 
+ * NULL is returned
+ * 
+ * T = O(N)
+*/
+listNode *listSearchKey(list *list, void *key) {
+    
+    listIter *iter;
+    listNode *node;
+
+    // 迭代整个链表
+    iter = listGetIterator(iter, AL_START_HEAD);
+    while ((node = listNext(iter)) != NULL) {
+
+        // 对比
+        if (list->match) {
+            if (list->match(node->value, key)) {
+                listReleaseIterator(iter);
+                // 找到
+                return node;
+            }
+        } else {
+            if (key == node->value) {
+                listReleaseIterator(iter);
+                // 找到
+                return node;
+            }
+        }
+    }
+
+    listReleaseIterator(iter);
+
+    // 未找到
+    return NULL;
+}
 listNode *listIndex(list *list, listIter *li);
 
 /*
