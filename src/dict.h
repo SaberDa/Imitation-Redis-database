@@ -109,4 +109,37 @@ typedef struct dict {
 
 } dict;
 
+/*
+ * 字典迭代器
+ * 
+ * 如果 safe 的属性是 1，那么在迭代器进行的过程中，
+ * 程序仍然可以执行 dictAdd, dictFind 和其他函数，对字典进行修改
+ * 
+ * 如果 safe 的属性不是 1，那么程序只会调用 dictNext 对字典进行迭代，
+ * 而不是对字典进行修改
+*/
+/* 
+ * If safe is set to 1 this is a safe iterator, that means, you can call
+ * dictAdd, dictFind, and other functions against the dictionary even while
+ * iterating. Otherwise it is a non safe iterator, and only dictNext() 
+ * should be called while iterating.
+*/
+typedef struct dictIterator {
+
+    dict *d;                // 被迭代的字典
+
+    int table;              // 正在被迭代的哈希表号码，值可以是 0 或者 1
+    int index;              // 迭代器当前所指向的哈希表索引位置
+    int safe;               // 标识这个迭代器是否安全
+
+    dictEntry *entry;       // 当前迭代到的结点的指针
+    dictEntry *nextEntry;   // 当前迭代结点的下一个指针
+                            // 因为在安全迭代器运作时，entry 指向的结点可能会被修改
+                            // 所以需要一个额外的指针来保存下一个结点的位置
+                            // 从而防止指针丢失
+
+    long long fingerprint;  // unsafe iterator fingerprint for misuse detection
+
+} dictIterator;
+
 #endif /* __DICT_H */
