@@ -24,6 +24,22 @@
 // 如果字典的私有数据不使用时，用这个宏避免编译器错误
 #define DICT_NOTUSED(V) ((void) V)
 
+/* 哈希表结点 */
+typedef struct dictEntry {
 
+    // 键
+    void *key;
+
+    // 值
+    union {
+        void *val;
+        uint64_t u64;
+        int64_t s64;
+    } v;
+
+    // 指向下个哈希表结点，形成链表
+    struct dictEntry *next;
+
+} dictEntry;
 
 #endif /* __DICT_H */
