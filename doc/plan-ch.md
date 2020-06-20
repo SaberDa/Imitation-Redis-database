@@ -292,3 +292,4 @@
 
 [Redis源码剖析专栏](https://zhuanlan.zhihu.com/zeecoderRedis)
 
+[Redis 设计与实现](https://redisbook.readthedocs.io/en/latest/index.html)
