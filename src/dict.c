@@ -237,3 +237,33 @@ int _dictInit(dict *d, dictType *type, void * privDataPtr) {
 
     return DICT_OK; 
 }
+
+/*
+ * Resize the table to the minimal size that contains all the elements,
+ * but with the invariant of a USED/BUCKETS ratio near to <= 1.
+ * 
+ * T = O(N)
+*/
+/*
+ * 缩小给定字典
+ * 让它的已用字节数和字典大小之间的比率接近 1:1
+ * 
+ * 返回 DICT_ERR 表示字典已经在 rehash, 或者 dict_can_resize 为假。
+ * 
+ * 成功创建体积更小的 ht[1]，可以开始 resize 时，返回 DICT_OK
+*/
+int dictResize(dict *d) {
+    int minimal;
+
+    // 不能在关闭 rehash 或者正在 rehash 的时候调用
+    if (!dict_can_resize || dictIsRehashing(d)) return DICT_ERR;
+
+    // 计算比率接近 1:1 所需要的最少节点数量
+    minimal = d->ht[0].used;
+    if (minimal < DICT_HT_INITIAL_SIZE) 
+        minimal = DICT_HT_INITIAL_SIZE;
+    
+    //调整字典的大小
+    // T= O(N)
+    return dictExpand(d, minimal);
+}
