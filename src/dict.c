@@ -200,3 +200,14 @@ static void _dictReset(dictht *ht) {
     ht->sizemask = 0;
     ht->used = 0;
 }
+
+// Create a new hash table
+// 创建一个新的字典
+// T = O(1)
+dict *dictCreate(dictType *type, void *privDataPtr) {
+    dict *d = zmalloc(sizeof(*d));
+
+    _dictInit(d, type, privDataPtr);
+
+    return d;
+}
