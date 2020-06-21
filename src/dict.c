@@ -324,3 +324,90 @@ int dictExpand(dict *d, unsigned long size) {
     d->rehashidx = 0;
     return DICT_OK;
 }
+
+/* Perfroms N steps of incremental rehashing. Returns 1 if there are still
+ * keys to move from the old to the new hash table, otherwise 0 is returned.
+ * 
+ * Note that a rehashing step consists in moving a bucket (that may have more 
+ * than one key as we use chaining) from the old to the new hash table
+ *
+ * T = O(N)
+*/
+/*
+ * 执行 N 步渐进式 rehash
+ * 
+ * 返回 1 表示仍有键需要从 0 号哈希表移动到 1 号哈希表
+ * 返回 0 表示所有键都已经迁移完毕
+ * 
+ * 注意： 每步 rehash 都是以一个哈希表索引（桶）作为单位的
+ * 一个桶里可以有多个结点
+ * 被 rehash 的桶里的所有结点都会被移动到新哈希表
+*/
+int dictRehash(dict *d, int n) {
+    // 只可以在 rehash 进行时执行
+    if (!dictIsRehashing(d)) return 0;
+
+    // 进行 N 步迁移
+    // T = O(N)
+    while (n--) {
+        dictEntry *de, *nextde;
+
+        /* check if we already rehashed the whole table */
+        // 如果 0 号哈希表为空，那么表示 rehash 执行完毕
+        // T = O(1)
+        if (d->ht[0].used == 0) {
+            // 释放 0 号哈希表
+            zfree(d->ht[0].table);
+            // 将原来的 1 号哈希表设置为新的 0 号哈希表
+            d->ht[0] = d->ht[1];
+            // 重置旧的 1 号哈希表
+            _dictReset(&d->ht[1]);
+            // 关闭 rehash 标识
+            d->rehashidx = -1;
+            // 返回 0， 向调用者表示 rehash 已经完成
+            return 0;
+        }
+
+        /* Note that rehashidx can't overflow as we are sure there are more elements because ht[0].used != 0 */
+        // 确保 rehashidx 没有越界
+        assert(d->ht[0].size > (unsigned)d->rehashidx);
+
+        // 略过数组中为空的索引，找到下一个非空的索引
+        while (d->ht[0].table[d->rehashidx] == NULL) d->rehashidx++;
+
+        // 指向该索引的链表头结点
+        de = d->ht[0].table[d->rehashidx];
+
+        /* Move all the keys in this bucket from the old to the new hash HT */
+        // 将链表中所有结点迁移到新哈希表
+        // T = O(1)
+        while (de) {
+            unsigned int h;
+
+            // 保存下个结点的指针
+            nextde = de->next;
+
+            /* Get the index in the new hash table */
+            // 计算新哈希表的哈希值，以及结点插入的索引位置
+            h = dictHashKey(d, de->key) & d->ht[1].sizemask;
+
+            // 插入结点到新的哈希表
+            de->next = d->ht[1].table[h];
+            d->ht[1].table[h] = de;
+            
+            // 更新计数器
+            d->ht[0].used--;
+            d->ht[1].used++;
+
+            // 继续处理下个结点
+            de = nextde;
+        }
+
+        // 将刚迁移完的哈希表索引的指针设为空
+        d->ht[0].table[d->rehashidx] = NULL;
+
+        // 更新 rehash 索引
+        d->rehashidx++;
+    }
+    return 1;
+}
