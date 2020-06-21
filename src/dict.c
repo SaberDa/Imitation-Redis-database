@@ -67,3 +67,34 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 
 /* =========================================================================== */
 
+/*
+ * 通过 dictEnableResize() 和 dictDisableResize() 两个函数，
+ * 程序可以手动的允许或阻止哈希表进行 rehash，
+ * 这在 Redis 使用子进程进行保存操作时，可以有效的利用 copy-on-write 机制
+ * 
+ * 需要注意的是，并非所有 rehash 都会被 dictDisableRehash() 阻止，
+ * 通过已使用结点的数量和字典大小之间的比率，
+ * 大于字典强制 rehash 比率 dict_force_resize_ratio，
+ * 那么 rehash 仍然会（强制）进行
+*/
+/*
+ * Using dictEnableResize() / dictDisableResize() we make possible to 
+ * enable/disable resizing of the hash table as needed. This is very important
+ * for Redis, as we use copy-on-write and don't want to move too much memory 
+ * around when there is a child performing saving operations.
+ * 
+ * Note that even when dict_can_resize is set to 0, not all resizes are 
+ * prevented: a hash table is still allowed to grow if the ratio between
+ * the number of elements and the buckets > dict_force_resize_ratio.
+*/
+
+static int dict_can_resize = 1;       // 指示字典是否启用 rehash 的标识
+static unsigned int dict_force_resize_ratio = 5;    // 强制 rehash 的比率
+
+/* --------------------- private prototypes --------------------------- */
+
+static int _dictExpandIfNeeded(dict *ht);
+static unsigned long _dictNextPower(unsigned long size);
+static int _dictKeyIndex(dict *ht, const void *key);
+static int _dictInit(dict *ht, dictType *type, void *privDataPtr);
+
