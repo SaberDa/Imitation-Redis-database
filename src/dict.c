@@ -267,3 +267,60 @@ int dictResize(dict *d) {
     // T= O(N)
     return dictExpand(d, minimal);
 }
+
+/* Expand or create the hash table */
+/*
+ * 创建一个新的哈希表，并根据字典的情况，选择以下其中一个动作来进行
+ * 
+ * 1) 如果字典的 0 号哈希表为空，那么将新哈希表设置为 0 号哈希表
+ * 2) 如果字典的 0 号哈希表非空，那么将新哈希表设置为 1 号哈希表
+ *    并打开字典的 rehash 标识，使得程序可以对字典进行 rehash
+ * 
+ * size 参数不够大，或者 rehash 已经在进行时，放回 DICT_ERR
+ * 
+ * 成功创建 0 号哈希表，或者 1 号哈希表时，返回 DICT_OK
+ * 
+ * T = O(N)
+*/
+int dictExpand(dict *d, unsigned long size) {
+
+    // 新哈希表
+    dictht n;
+
+    // 根据 size 参数，计算哈希表的大小
+    // T = O(1)
+    unsigned long realsize = _dictNextPower(size);
+
+
+    /* The size is invalid if it is smaller than the number of 
+     * elements already inside the hash table */
+    // 不能在字典正在 rehash 时进行
+    // size 的值也不能小于 0 号哈希表的当前已使用结点
+    if (dictIsRehashing(d) || d->ht[0].used > size) return DICT_ERR;
+
+    /* Allocate the new hash table and initialize all pointers to NULL */
+    // 为哈希表分配空间，并将所有指针指向 NULl
+    n.size = realsize;
+    n.sizemask = realsize - 1;
+    // T = O(N)
+    n.table = zcalloc(realsize * sizeof(dictEntry*));
+    n.used = 0;
+
+    /* Is this the first initialization? If so it's not really a rehashing
+     * we just set the first hash table so that it can accept keys
+    */
+    // 如果 0 号哈希表为空，那么这是一次初始化
+    // 程序将新哈希表赋给 0 号哈希表的指针，然后字典就可以开始处理键值对了 
+    if (d->ht[0].table == NULL) {
+        d->ht[0] = n;
+        return DICT_OK;
+    }
+
+    /* Prepare a second hash table for incremental rehashing */
+    // 如果 0 号哈希表非空，那么这是一次 rehash
+    // 程序将新哈希表设置为 1 号哈希表
+    // 并将字典的 rehash 标识打开，让程序可以开始对字典进行 rehash
+    d->ht[1] = n;
+    d->rehashidx = 0;
+    return DICT_OK;
+}
