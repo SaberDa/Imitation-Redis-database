@@ -211,3 +211,29 @@ dict *dictCreate(dictType *type, void *privDataPtr) {
 
     return d;
 }
+
+/* Initialize the hash table 
+ * T = O(1)
+*/
+/* 初始化哈希表*/ 
+int _dictInit(dict *d, dictType *type, void * privDataPtr) {
+
+    // 初始化两个哈希表的各项属性值
+    // 但暂时还不分配内存给哈希表数组
+    _dictReset(&d->ht[0]);
+    _dictReset(&d->ht[1]);
+
+    // 设置类型特定函数
+    d->type = type;
+
+    // 设置私有数据
+    d->privdata = privDataPtr;
+
+    // 设置哈希表 rehash 状态
+    d->rehashidx = -1;
+
+    // 设置字典的安全迭代器数量
+    d->iterators = 0;
+
+    return DICT_OK; 
+}
