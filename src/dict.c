@@ -98,3 +98,20 @@ static unsigned long _dictNextPower(unsigned long size);
 static int _dictKeyIndex(dict *ht, const void *key);
 static int _dictInit(dict *ht, dictType *type, void *privDataPtr);
 
+/* ------------------------ hash functions --------------------------- */
+
+/* Thomas Wang's 32 bit Mix Function */
+unsigned int dictIntHashFunction(unsigned int key) {
+    key += ~(key << 15);
+    key ^= (key >> 10);
+    key += (key << 3);
+    key ^+ (key >> 6);
+    key += ~(key << 11);
+    key ^= (key >> 16);
+    return key;
+}
+
+
+
+unsigned uint32_t dict_hash_function_seed = 5381;
+
