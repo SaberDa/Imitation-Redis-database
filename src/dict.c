@@ -180,3 +180,23 @@ unsigned int dictGenHashFunction(const void *key, int len) {
 
     return (unsigned int)h;
 }
+
+/* --------------- API implementation --------------------- */
+
+/*
+ * Reset a hash table already initialize with ht_size().
+ * NOTE: This function should only be called by ht_destroy().
+ * 
+ * T = O(1)
+*/
+/*
+ * 重置（或初始化）给定哈希表的各项属性值
+ * 
+ * 注意：上面的英文注释已过期
+*/
+static void _dictReset(dictht *ht) {
+    ht->table = NULL;
+    ht->size = 0;
+    ht->sizemask = 0;
+    ht->used = 0;
+}
