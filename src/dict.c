@@ -467,3 +467,33 @@ int dictRehashMillisecond(dict *d, int ms) {
 static void _dictRehashStep(dict *d) {
     if (d->iterators == 0) dictRehash(d, 1);
 }
+
+/*
+ * Add an element to the target hash table
+ * 
+ * Worst case: O(N)
+ * Average: O(1)
+*/
+/*
+ * 尝试将给定键值对添加到字典中
+ * 
+ * 只有给定键 key 不存在于字典时，添加操作才会成功
+ * 
+ * 添加成功返回 DICT_OK，失败返回 DICT_ERR
+*/
+int dictAdd(dict *d, void *key, void *val) {
+
+    // 尝试添加键到字典，并返回包含了这个键的新哈希结点
+    // T = O(N)
+    dictEntry *entry = dictAddRaw(d, key);
+
+    // 键已存在，添加失败
+    if (!entry) return DICT_ERR;
+
+    // 键不存在，设置结点的值
+    // T = O(1)
+    dictSetVal(d, entry, val);
+
+    // 添加成功
+    return DICT_OK;
+}
