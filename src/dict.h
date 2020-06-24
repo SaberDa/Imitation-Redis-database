@@ -175,11 +175,16 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 
 // 释放给定字典结点的键
 #define dictFreeKey(d, entry) \
+    if ((d)->type->keyDestructor) \
+        (d)->type->keyDestructor((d)->privdata, (entry)->key)
+
+// 设置给定字典结点的键
+#define dictSetKey(d, entry, _key_) do { \
     if ((d)->type->keyDup) \
-        entry->key = (d)->type->ketDup((d)->privdata, _key_); \
+        entry->key = (d)->type->keyDup((d)->privdata, _key_); \
     else \
         entry->key = (_key_); \
-}while(0)
+} while(0)
 
 // 对比两个键
 #define dictCompareKeys(d, key1, key2) \

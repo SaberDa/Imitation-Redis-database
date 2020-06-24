@@ -497,3 +497,65 @@ int dictAdd(dict *d, void *key, void *val) {
     // 添加成功
     return DICT_OK;
 }
+
+/*
+ * Low level add. This function adds the entry but instead of setting
+ * a value returns the dicEntry structure to the user, that will make
+ * sure to fill the value field as he wishes
+ * 
+ * This function is also directly exposed to user API to be called mainly 
+ * in order to store non-pointers inside the hash value, example:
+ * 
+ * entry = dictAddRaw(dict, mykey);
+ * if (entry != NULL) dictSetSignedIntegerVal(entry, 1000);
+ * 
+ * Return values:
+ * 
+ * If key already exists NULL is returned
+ * If key was added, the hash entry is returned to be manipulated by the call
+*/
+/*
+ * 尝试将键插入到字典中
+ * 
+ * 如果键已经在字典中，那么返回 NULL
+ * 
+ * 如果键不存在，那么程序创建新的哈希结点，
+ * 将结点和键关联，并插入到字典，然后返回结点本身
+ * 
+ * T = O(N)
+*/
+dictEntry *dictAddRow(dict *d, void *key) {
+    int index;
+    dictEntry *entry;
+    dictht *ht;
+
+    // 如果条件允许，进行单步 rehash
+    // T = O(1)
+    if (dictIsRehashing(d)) _dictRehashStep(d);
+
+    /* Get the index of the new element, or -1 if
+     * the element already exists */
+    // 计算键在哈希表中的索引值
+    // 如果键为 -1，那么表示键已经存在
+    // T= O(N)
+    if ((index = _dictKeyIndex(d, key)) == -1) return NULL;
+
+    /* Allocate the memory and store the new entry */
+    // 如果字典正在 rehash，那么将新键添加到 1 号哈希表
+    // 否则，将新键添加到 0 号哈希表
+    ht = dictIsRehashing(d) ? &d->ht[1] : &d->ht[0];
+    // 为新结点分配空间
+    entry = zmalloc(sizeof(*entry));
+    // 将新结点插入到链表表头
+    entry->next = ht->table[index];
+    ht->table[index] = entry;
+    // 更新哈希表已使用结点数量
+    ht->size++;
+
+    /* Set the hash entry fields */
+    // 设置新的结点
+    // T = O(1) 
+    dictSetKey(d, entry, key);
+
+    return entry;
+}
