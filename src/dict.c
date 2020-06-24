@@ -423,3 +423,22 @@ long long timeInMilliseconds(void) {
     gettimeofday(&tv, NULL);
     return (((long long)tv.tv_sec) *1000) + (tv.tv_usec / 1000);
 }
+
+/* Rehash for an amount of the time between ms millisecond ans ms + 1 milliseconds */
+/*
+ * 在给定毫秒内，以 100 步为单位，对字典进行 rehash
+ * 
+ * T = O(N)
+*/
+int dictRehashMillisecond(dict *d, int ms) {
+
+    long long start = timeInMilliseconds();
+    int rehashes = 0;
+
+    while (dictRehash(d, 100)) {
+        rehashes += 100;
+        if (timeInMilliseconds() - start > ms) break;
+    }
+
+    return rehashes;
+}
