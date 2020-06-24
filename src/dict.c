@@ -442,3 +442,28 @@ int dictRehashMillisecond(dict *d, int ms) {
 
     return rehashes;
 }
+
+/* 
+ * This function preforms just a step of rehashing, and only if there are
+ * no safe iterators bound to our hash table. When we have iterators in the
+ * middle of a rehashing we can't mess with the two hash tables otherwise 
+ * some element can be missed or duplicated
+ * 
+ * This function is called by common lookup or update operations in the 
+ * dictionary so that the hash table automatically migrates from H1 to H2
+ * while it is actively used
+ * 
+ * T = O(1)
+ */
+/*
+ * 在字典不存在安全迭代器的情况下，对字典进行单步 rehash
+ * 
+ * 字典有安全迭代器的情况下不能进行 rehash
+ * 因为两种不同的迭代和修改操作可能会弄乱字典
+ * 
+ * 这个函数被多个通用的查找、更新操作调用，
+ * 它可以让字典在被使用的同时进行 rehash
+*/
+static void _dictRehashStep(dict *d) {
+    if (d->iterators == 0) dictRehash(d, 1);
+}
