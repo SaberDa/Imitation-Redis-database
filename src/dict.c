@@ -559,3 +559,48 @@ dictEntry *dictAddRow(dict *d, void *key) {
 
     return entry;
 }
+
+/* 
+ * Add an element, discarding the old if the key already exists
+ * 
+ * Return 1 if the key was added from scratch, 0 if there was already an
+ * element with such key and dictReplace() just perfromed a value update
+ * operation
+ * 
+ * T = O(N)
+*/
+/*
+ * 将给定的键值对添加到字典中，如果键已经存在，那么删除旧有的键值对
+ * 
+ * 如果键值对全新添加，那么返回 1
+ * 如果键值对是通过对原有的键值对更新得到的，那么返回 0 
+*/
+int dictReplace(dict *d, void *key, void *val) {
+    dictEntry *entry, auxentry;
+
+    /* Try to add the element. If the key does not
+     * exist dictAdd will return succed*/
+    // 尝试直接将键值对添加到字典
+    // 如果键 key 不存在，添加会成功
+    // T = O(N)
+    if (dictAdd(d, key, val) == DICT_OK) return 1;
+
+    /* It already exists, get the entry */
+    // 运行到这里，说明键 key 已经存在，那么找出包含这个 key 的结点
+    // T = O(1)
+    entry = dictFind(d, key);
+
+    /* Set the new value and free the old one. Note that it is important
+     * to do that in this order, as the value may just be exactly the same
+     * as the pervious one. In this context, think to reference counting,
+     * you want to increment (set), and then decrement (free), and not the 
+     * reverse */
+    // 先保存原有的值的指针
+    auxentry = *entry;
+    // 然后设置新的值
+    dictSetVal(d, entry, val);
+    // 然后释放旧值
+    dictFreeVal(d, &auxentry);
+
+    return 0;
+}
