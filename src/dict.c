@@ -838,3 +838,20 @@ dictEntry *dictFind(dict *d, const void *key) {
     /* Not found */
     return NULL;
 }
+
+/*
+ * 获取包含给定键的结点的值
+ * 
+ * 如果结点不为空，返回结点的值
+ * 否则返回NULL
+ * 
+ * T = O(1)
+*/
+void *dictFetchValue(dict *d, const void *key) {
+    dictEntry *he;
+
+    // T = O(1)
+    he = dictFind(d, key);
+
+    return he ? dictGetVal(he) : NULL;
+}
