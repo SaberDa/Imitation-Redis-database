@@ -775,3 +775,17 @@ int _dictClear(dict *d, dictht *ht, void(callback)(void *)) {
     /* Never fails */ 
     return DICT_OK;
 }
+
+/*
+ * Clear & Release the hash table
+ * 
+ * T = O(N)
+*/
+// 删除并释放整个字典
+void dictRelease(dict *d) {
+    // 删除并清空两个哈希表
+    _dictClear(d, &d->ht[0], NULL);
+    _dictClear(d, &d->ht[0], NULL);
+    // 释放结点结构
+    zfree(d);
+}
