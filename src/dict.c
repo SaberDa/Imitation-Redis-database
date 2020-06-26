@@ -524,7 +524,7 @@ int dictAdd(dict *d, void *key, void *val) {
  * 
  * T = O(N)
 */
-dictEntry *dictAddRow(dict *d, void *key) {
+dictEntry *dictAddRaw(dict *d, void *key) {
     int index;
     dictEntry *entry;
     dictht *ht;
@@ -603,4 +603,30 @@ int dictReplace(dict *d, void *key, void *val) {
     dictFreeVal(d, &auxentry);
 
     return 0;
+}
+
+/*
+ * dictReplaceRaw() is simply a version of dictAddRaw() that allows
+ * returns the hash entry of the specified key, even if the key already
+ * exists and can't be added (in that case the entry of the already
+ * existing key is returned)
+ * 
+ * See dictAddRow() for more information
+ * 
+ * T = O(N)
+*/
+/*
+ * dictAddRaw() 根据给定 key 释放存在，执行以下动作：
+ * 
+ * 1. 若 key 已经存在，返回包含该 key 的字典结点
+ * 2. 若 key 不存在，那么将 key 添加到字典
+ * 
+ * 不论发生以上哪一种情况，
+ * dictAddRaw() 都总是返回包含给定 key 的字典结点
+*/
+dictEntry *dictReplaceRaw(dict *d, void *key) {
+
+    dictEntry *entry = dictFind(d, key);
+
+    return entry ? entry : dictAddRaw(d, key);
 }
