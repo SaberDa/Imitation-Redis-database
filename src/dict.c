@@ -789,3 +789,52 @@ void dictRelease(dict *d) {
     // 释放结点结构
     zfree(d);
 }
+
+/*
+ * 返回字典中包含 key 的结点
+ * 
+ * 找到并返回结点
+ * 
+ * 找不到返回 NULL
+ * 
+ * T = O(1)
+*/
+dictEntry *dictFind(dict *d, const void *key) {
+    dictEntry *he;
+    unsigned int h, idx, table;
+
+    // 如果字典的哈希表为空，返回 NULL
+    if (d->ht[0].size == 0) return NULL;
+
+    // 如果条件允许的话， 进行单步 rehash
+    if (dictIsRehashing(d)) _dictRehashStep(d);
+
+    // 计算键的哈希值
+    h = dictHashKey(d, key);
+
+    // 在字典中查找这个键
+    // T = O(1)
+    for (table = 0; table <= 1; table++) {
+
+        // 计算索引值
+        idx = h & d->ht[table].sizemask;
+
+        // 遍历给定索引上的链表的所有结点，查找key
+        he = d->ht[table].table[idx];
+        // T = O(1)
+        while (he) {
+            if (dictCompareKeys(d, key, he->key)) return he;
+            he = he->next;
+        }
+
+        /*
+         * 如果程序遍历完 0 号哈希表，仍然没有找到指定的键的结点
+         * 那么程序会先检查字典是否进行 rehash
+         * 然后才决定是否直接返回 NULL，还是继续查找 1 号哈希表
+        */ 
+        if (!dictIsRehashing(d)) return NULL;
+    }
+
+    /* Not found */
+    return NULL;
+}
