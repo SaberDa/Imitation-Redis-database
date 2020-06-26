@@ -55,10 +55,10 @@ typedef struct dictType {
     void *(*valDup)(void *privdata, const void * obj);
 
     // 对比键
-    int (*ketCompare)(void *privdata, const void *key1, const void *key2);
+    int (*keyCompare)(void *privdata, const void *key1, const void *key2);
 
     // 销毁键
-    int (*ketDestructor)(void *privdata, void *key);
+    int (*keyDestructor)(void *privdata, void *key);
 
     // 销毁值
     void (*valDestructor)(void *privdata, void *obj);
@@ -190,7 +190,7 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 #define dictCompareKeys(d, key1, key2) \
     (((d)->type->keyCompare) ? \
         (d)->type->keyCompare((d)->privdata, key1, key2) : \
-        (key1 == key2))
+        (key1) == (key2))
 
 // 计算给定键的哈希值
 #define dictHashKey(d, key) (d)->type->hashFunction(key)

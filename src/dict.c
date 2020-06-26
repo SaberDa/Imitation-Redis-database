@@ -626,7 +626,90 @@ int dictReplace(dict *d, void *key, void *val) {
 */
 dictEntry *dictReplaceRaw(dict *d, void *key) {
 
+    // 使用 key 在字典中查找结点
+    // T = O(1)
     dictEntry *entry = dictFind(d, key);
 
+    // 如果结点找到了直接返回结点，否则添加并返回一个新结点
+    // T = O(1)
     return entry ? entry : dictAddRaw(d, key);
+}
+
+/* 
+ * Search and remove an element
+ * 
+ * T = O(1)
+*/
+/*
+ * 查找并删除包含给定键的结点
+ * 
+ * 参数 nofree 决定是否调用键和值的释放函数
+ * 0 表示调用，1 表示不调用
+ * 
+ * 找到并成功删除返回 DICT_OK，没找到则返回 DICT_ERR
+*/
+static int dictGenericDelete(dict *d, const void *key, int nofree) {
+    unsigned int h, idx;
+    dictEntry *he, *prevHe;
+    int table;
+
+    // d->ht[0].table is NULL
+    // 字典（的哈希表）为空
+    if (d->ht[0].size == 0) return DICT_ERR;
+
+    // 进行单步 rehash
+    // T = O(1)
+    if (dictIsRehashing(d)) _dictRehashStep(d);
+
+    // 计算哈希值
+    h = dictHashKey(d, key);
+
+    // 遍历哈希表
+    // T = O(1)
+    for (table = 0; table <= 1; table++) {
+
+        // 计算索引值
+        idx = h & d->ht[table].sizemask;
+        // 指向该索引上的链表
+        he = d->ht[table].table[idx];
+        prevHe = NULL;
+        // 遍历该链表上所有结点
+        // T = O(1)
+        while (he) {
+
+            if (dictCompareKeys(d, key, he->key)) {
+                // 寻找目标节点
+
+                /* Unlink the element from the list */
+                // 从链表中删除 
+                if (prevHe) prevHe->next = he->next;
+                else d->ht[table].table[idx] = he->next;
+
+                // 调用调用键和值的释放函数
+                if (!nofree) {
+                    dictFreeKey(d, he);
+                    dictFreeVal(d, he);
+                }
+
+                // 释放结点本身
+                zfree(he);
+
+                // 更新已使用结点数量
+                d->ht[table].used--;
+
+                // 返回已找到信号
+                return DICT_OK;
+            }
+
+            prevHe = he;
+            he = he->next;
+        }
+
+        // 如果执行到这里，说明在 0 号哈希表中找不到给定键
+        // 那么根据字典是否正在进行 rehash，决定要不要在 1 号哈希表中查找
+        if (!dictIsRehashing(d)) break;
+    }
+
+    /* Not found */
+    return DICT_ERR;
 }
