@@ -713,3 +713,16 @@ static int dictGenericDelete(dict *d, const void *key, int nofree) {
     /* Not found */
     return DICT_ERR;
 }
+
+/*
+ * 从字典中删除包含给定键的结点
+ * 
+ * 但不调用键值的释放函数来删除键值
+ * 
+ * 找到并成功删除返回 DICT_OK，没找到则返回 DICT_ERR
+ * 
+ * T = O(1)
+*/
+int dictDeleteNoFree(dict *ht, const void *key) {
+    return dictGenericDelete(ht, key, 1);
+}
