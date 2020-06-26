@@ -726,3 +726,52 @@ static int dictGenericDelete(dict *d, const void *key, int nofree) {
 int dictDeleteNoFree(dict *ht, const void *key) {
     return dictGenericDelete(ht, key, 1);
 }
+
+/* Destory an entire dictionary */
+/*
+ * 删除哈希表上的所有结点，并重置哈希表的各项属性
+ * 
+ * T = O(N)
+*/
+int _dictClear(dict *d, dictht *ht, void(callback)(void *)) {
+    unsigned long i;
+
+    /* Free all the elements */
+    // 遍历并释放整个哈希表
+    // T = O(N)
+    for (i = 0; i < ht->size && ht->used > 0; i++) {
+        dictEntry *he, *nextHe;
+        if (callback && (i & 65535) == 0) callback(d->privdata);
+
+        // 跳过空索引
+        if ((he = ht->table[i]) == NULL) continue;
+
+        // 遍历链表
+        // T = O(1)
+        while (he) {
+            nextHe = he->next;
+            // 删除键
+            dictFreeKey(d, he);
+            // 删除值
+            dictFreeVal(d, he);
+            // 释放结点
+            zfree(he);
+
+            // 更新已使用结点计数
+            ht->used--;
+            // 处理下个结点
+            he = nextHe;
+        }
+    }
+
+    /* Free the table and the allocated cache structure */
+    // 释放哈希表结构
+    zfree(ht->table);
+
+    /* Re-initialize the table */
+    // 重置哈希表属性
+    _dictReset(ht);
+
+    /* Never fails */ 
+    return DICT_OK;
+}
