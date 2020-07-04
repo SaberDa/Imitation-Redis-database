@@ -901,3 +901,20 @@ long long dictFingerPrint(dict *d) {
    }
    return hash;
 }
+
+/* 创建并返回给定字典的不安全迭代器
+ *
+ * T = O(1)
+ */
+dictIterator *dictGetIterator(dict *d) {
+    dictIterator *iter = zmalloc(sizeof(*iter));
+
+    iter->d = d;
+    iter->table = 0;
+    iter->index = -1;
+    iter->safe = 0;
+    iter->entry = NULL;
+    iter->nextEntry = NULL;
+
+    return iter;
+} 
