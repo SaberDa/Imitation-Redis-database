@@ -996,3 +996,19 @@ dictEntry* dictNext(dictIterator *iter) {
     // 迭代完毕
     return NULL;
 }
+
+/* 释放给定字典迭代器
+ * 
+ * T = O(1)
+ */
+void dictReleaseIterator(dictIterator *iter) {
+    if (!(iter->index == -1 && iter->table == 0)) {
+        // 释放安全迭代器时，安全迭代器计数器减一
+        if (iter->safe) 
+            iter->d->iterators--;
+        // 释放不安全迭代器时，验证指纹时候有变化
+        else 
+            assert(iter->fingerprint == dictFingerPrint(iter->d));
+    }
+    zfree(iter);
+}
