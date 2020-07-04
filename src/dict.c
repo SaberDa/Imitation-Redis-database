@@ -931,3 +931,68 @@ dictIterator *dictGetSafeIterator(dict *d) {
 
     return i;
 }
+
+/*
+ * 返回迭代器指向的当前节点
+ * 
+ * 字典迭代完毕时，返回 NULL
+ * 
+ * T = O(1)
+*/
+dictEntry* dictNext(dictIterator *iter) {
+    while (1) {
+
+        // 进入当前循环有两种可能
+        // 1) 这是迭代器的第一次运行
+        // 2) 当前索引链表中的节点已经迭代完（NULL为链表的表尾）
+        if (iter->entry == NULL) {
+
+            // 指向被迭代的哈希表
+            dictht *ht = &iter->d->ht[iter->table];
+
+            // 初次迭代时运行
+            if (iter->index == -1 && iter->table == 0) {
+                // 如果是安全迭代器，那么更新安全迭代器计数器
+                if (iter->safe) iter->d->iterators++;
+                // 如果是不安全迭代器，那么计算指纹
+                else iter->fingerprint = dictFingerPrint(iter->d);
+            }
+            // 更新索引
+            iter->index++;
+
+            // 如果迭代器的当前索引大于当前被迭代的哈希表大小
+            // 那么说明这个哈希表已经完成迭代
+            if (iter->index >= (signed)ht->size) {
+                // 如果正在 rehash 的话，那么说明 1 号哈希表也正在使用中
+                // 那么继续对 1 号哈希表进行迭代
+                if (dictIsRehashing(iter->d) && iter->table == 0) {
+                    iter->table++;
+                    iter->index = 0;
+                    ht = &iter->d->ht[1];
+                } else 
+                    // 如果没有进行 rehash，那么说明迭代已经完成
+                    break;
+            }
+
+            // 如果进行到这里，说明这个哈希表并未迭代完
+            // 更新结点指针，指向下个索引链表的表头结点
+            iter->entry = ht->table[iter->index];
+        } else {
+            // 执行到这里，说明程序正在迭代某个链表
+            // 将结点指针指向链表的下个结点
+            iter->entry = iter->nextEntry;
+        }
+
+        // 如果当前结点不为空，那么也记录下该结点的下个结点
+        // 因为安全迭代器有可能会将迭代器返回当前的结点删除
+        if (iter->entry) {
+            /* We need to save the 'next' node here, the iterator
+             * user may delete the entry we returning */
+            iter->nextEntry = iter->entry->next;
+            return iter->entry;
+        }
+    }
+
+    // 迭代完毕
+    return NULL;
+}
