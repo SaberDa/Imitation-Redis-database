@@ -1012,3 +1012,74 @@ void dictReleaseIterator(dictIterator *iter) {
     }
     zfree(iter);
 }
+
+/*
+ * Return a random entry from the hash table. Useful to 
+ * implement randomized algorithm
+*/
+/*
+ * 随机返回字典中任意一个结点
+ * 
+ * 可用于实现随机化算法
+ * 
+ * 如果字典为空，返回 NULL
+ * 
+ * T = O(N)
+*/
+dictEntry* dictGetRandomKey(dict *d) {
+    dictEntry *he, *orighe;
+    unsigned int h;
+    int listlen, listele;
+
+    // 如果字典为空
+    if (dictSize(d) == 0) return NULL;
+
+    // 进行单步 rehash
+    if (dictIsRehashing(d)) _dictRehashStep(d);
+
+    // 如果正在 rehash, 那么将 1 号哈希表也作为随机查找的目标
+    if (dictIsRehashing(d)) {
+        // T = O(N)
+        do {
+            h = random() % (d->ht[0].size + d->ht[1].size);
+            he = (h >= d->ht[0].size) ? d->ht[1].table[h - d->ht[0].size] :
+                                        d->ht[0].table[h];
+        } while (he == NULL);
+    } else {
+    // 否则，自从 0 号哈希表中查找结点
+        // T = O(N)
+        do {
+            h = random() & d->ht[0].sizemask;
+            he = d->ht[0].table[h];
+        } while (he == NULL);
+    }
+
+    /*
+     * Now we found a non empty bucket, but it is a linked 
+     * list and we need to get a random element form the list.
+     * The only sane way to do is counting the elements and 
+     * select a random index
+    */
+    // 目前 he 已经指向了一个非空结点
+    // 程序将从这个链表随机返回一个结点
+    listlen = 0;
+    orighe = he;
+    
+    // 计算结点数量
+    // T = O(1)
+    while (he) {
+        he = he->next;
+        listlen++;
+    }
+
+    // 取模，得出随机结点的索引
+    listele = random() % listlen;
+    he = orighe;
+
+    // 按索引查找结点
+    // T = O(1)
+    while (listele--) he = he->next;
+
+    // 返回随机结点
+    return he;
+}
