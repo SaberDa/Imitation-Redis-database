@@ -918,3 +918,16 @@ dictIterator *dictGetIterator(dict *d) {
 
     return iter;
 } 
+
+/*
+ * 创建并返回给定结点的安全迭代器 
+ * 
+ * T = O(1)
+*/ 
+dictIterator *dictGetSafeIterator(dict *d) {
+    dictIterator *i = dictGetIterator(d);
+
+    i->safe = 1;
+
+    return i;
+}
