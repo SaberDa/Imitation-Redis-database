@@ -1504,3 +1504,13 @@ void dictEmpty(dict *d, void(callback)(void*)) {
     d->rehashidx = -1;
     d->iterators = 0;
 }
+
+/* 
+ * 开启自动 rehash
+ * 
+ * T = O(1)
+ */
+void dictEnableResize(void) {
+    dict_can_resize = 1;
+}
+
