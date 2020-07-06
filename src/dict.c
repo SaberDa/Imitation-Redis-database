@@ -1415,3 +1415,20 @@ static int _dictExpandIfNeeded(dict *d) {
     }
     return DICT_OK;
 }
+
+/* Our hash table capability is a power of two */
+/* 
+ * 计算第一个大于等于 size 的 2 的 N 次方，用作哈希表的值
+ * 
+ * T = O(1)
+*/
+static unsigned long _dictNextPower(unsigned long size) {
+    unsigned long i = DICT_HT_INITIAL_SIZE;
+
+    if (size >= LONG_MAX) return LONG_MAX;
+
+    while (1) {
+        if (i >= size) return i;
+        i *= 2;
+    }
+}
