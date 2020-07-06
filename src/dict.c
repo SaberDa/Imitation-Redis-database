@@ -1374,3 +1374,44 @@ unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn,
 
     return v;
 }
+
+/* ================= private functions =========================== */
+/*
+ * Expand the hash table if needed
+*/
+/*
+ * 根据需要，初始化字典（的哈希表），
+ * 或者对字典（现有的哈希表）进行扩展
+ * 
+ * T = O(N)
+*/
+static int _dictExpandIfNeeded(dict *d) {
+
+    /* Incremental rehashing already in progress. Return */
+    // 渐进式 rehash 已经在进行了，直接返回
+    if (dictIsRehashing(d)) return DICT_OK;
+
+    /* If the hash table is empty expand it to the initial size */
+    // 如果字典的 0 号哈希表为空，那么创建并返回初始化大小的 0 号哈希表
+    // T = O(1)
+    if (d->ht[0].size == 0) return dictExpand(d, DICT_HT_INITIAL_SIZE);
+
+    /*
+     * If we reached the 1:1 ratio, and we are allowed to resize the 
+     * hash table (global setting) or we should avoid it but the ratio
+     * between elements/buckets is over the "safe" threshold, we resize
+     * doubling the number of buckets
+    */
+    // 以下两个条件为真时，对字典进行扩展
+    // 1) 字典已使用结点数和字典大小之间的比率接近 1:1
+    //    并且 dict_can_resize 为真
+    // 2) 已使用结点数和字典大小之间的比率超过 dict_force_resize_ratio
+    if (d->ht[0].used >= d->ht[0].size &&
+        (dict_can_resize || 
+         d->ht[0].used / d->ht[0].size > dict_force_resize_ratio)) {
+            // 新哈希表大小至少是目前已使用结点数的两倍
+            // T = O(N)
+            return dictExpand(d, d->ht[0].used * 2);
+    }
+    return DICT_OK;
+}
