@@ -1514,3 +1514,11 @@ void dictEnableResize(void) {
     dict_can_resize = 1;
 }
 
+/*
+ * 关闭自动 rehash
+ * 
+ * T = O(1)
+*/
+void dictDisableResize(void) {
+    dict_can_resize = 0;
+}
