@@ -1486,3 +1486,21 @@ static int _dictKeyIndex(dict *d, const void *key) {
     // 返回索引值
     return idx;
 }
+
+/*
+ * 清空字典上的所有哈希表结点，
+ * 并重置字典属性
+ * 
+ * T = O(N)
+*/
+void dictEmpty(dict *d, void(callback)(void*)) {
+
+    // 删除两个哈希表上的所有结点
+    // T = O(N)
+    _dictClear(d, &d->ht[0], callback);
+    _dictClear(d, &d->ht[1], callback);
+
+    // 重置属性
+    d->rehashidx = -1;
+    d->iterators = 0;
+}
