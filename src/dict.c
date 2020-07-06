@@ -1432,3 +1432,57 @@ static unsigned long _dictNextPower(unsigned long size) {
         i *= 2;
     }
 }
+
+/* 
+ * Returns the index of a free slot that can be populated with
+ * a hash entry for the given 'key'
+ * If the key is already exists, -1 is returned
+ * 
+ * Note that if we are in the process of rehashing the hash table,
+ * the index is always returned in the context of the second (new)
+ * hash table/
+ * 
+ * T = O(N)
+ */
+/*
+ * 返回可以将 key 插入到哈希表的位置，
+ * 如果 key 已经存在于哈希表，那么返回-1
+ * 
+ * 注意，如果字典正在进行 rehash，
+ * 那么总是插入到 1 号哈希表
+*/
+static int _dictKeyIndex(dict *d, const void *key) {
+    unsigned int h, idx, table;
+    dictEntry *he;
+
+    /* Expand the hash table if needed */
+    // 单步 rehash
+    // T = O(N)
+    if (_dictExpandIfNeeded(d) == DICT_ERR) return -1;
+
+    /* Compute the key hash value */
+    // 计算 key 的哈希值
+    h = dictHashKey(d, key);
+
+    for (table = 0; table <= 1; table++) {
+
+        // 计算索引值
+        idx = h & d->ht[table].sizemask;
+
+        /* Search if this slot does not already contain the given key */
+        // 查找 key 是否存在
+        // T = O(1) 
+        he = d->ht[table].table[idx];
+        while (he) {
+            if (dictCompareKeys(d, key, he->key)) return -1;
+            he = he->next;
+        }
+
+        // 如果运行到这里，说明 0 号哈希表中所有结点都不包含 key
+        // 如果这时 rehash 正在进行，那么继续对 1 号哈希表进行 rehash
+        if (!dictIsRehashing(d)) break;
+    }
+
+    // 返回索引值
+    return idx;
+}
