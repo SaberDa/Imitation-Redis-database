@@ -62,3 +62,13 @@ static int64_t _intsetGetEncoded(intset *is, int pos, uint8_t enc) {
         return v16;
     }
 }
+
+/* Return the value at pos, using the configured encoding */
+/*
+ * 根据集合的编码方式，返回底层数组在 pos 索引上的值
+ * 
+ * T = O(1)
+*/
+static int64_t _intsetGet(intset *is, int pos) {
+    return _intsetGetEncoded(is, pos, intrev32ifbe(is->encoding));
+}
