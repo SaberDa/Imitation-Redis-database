@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "redis.h"
+#include "dict.h"
 
 #ifndef __ZSKIPLIST_H__
 #define __ZSKIPLIST_H__
@@ -41,5 +42,27 @@ typedef struct zskiplist {
     int level;                       // 表中层数最大的结点的层数
 
 } zskiplist;
+
+typedef struct {
+
+    // 最小值和最大值 
+    double min, max;                
+
+    // 指示最小值和最大值是否 “不” 包含在范围之内
+    // 值为 1 表示不包含，0 表示包含
+    int minex, maxex;               
+
+} zrangespec;
+
+zskiplist *zslCreate(void);
+void zslFree(zskiplist *zsl);
+zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj);
+int zslDelete(zskiplist *zsl, double score, robj *obj);
+void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update);
+zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range);
+zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range);
+unsigned long zslGetRank(zskiplist *zsl, double score, robj *o);
+unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dict);
+unsigned long zslDeleteRangeByRank(zskiplist *zsl, unsigned int start, unsigned int end, dict *dict);
 
 #endif
