@@ -54,6 +54,16 @@ typedef struct {
 
 } zrangespec;
 
+
+/*
+ * Struct to hold an inclusive/exclusive range spec by 
+ * lexicographic comparison
+*/
+typedef struct {
+    robj *min, *max;        // May by set to shared. (minstring | maxstring)
+    int minex, maxex;       // are min or max exclusive?
+} zlexrangespec;
+
 zskiplist *zslCreate(void);
 void zslFree(zskiplist *zsl);
 zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj);
