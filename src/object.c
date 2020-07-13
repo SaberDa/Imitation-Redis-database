@@ -28,7 +28,26 @@ void freeListObject(robj *o) {
     }
 }
 
+/*
+ * 释放有序集合对象
+*/
+void freeZsetObject(robj *o) {
+    zset *zs;
 
+    switch (o->encoding) {
+        case REDIS_ENCODING_SKIPLIST:
+            zs = o->ptr;
+            dictRelease(zs->dict);
+            zslFree(zs->zsl);
+            zfree(zs);
+            break;
+        case REDIS_ENCODING_ZIPLIST:
+            zfree(o->ptr);
+            break;
+        default:
+            redisPanic("Unknown sorted set encoding");
+    }
+}
 
 /*
  * 为对象的引用计数 -1
