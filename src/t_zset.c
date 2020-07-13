@@ -112,3 +112,26 @@ void zslFreeNode(zskiplistNode *node) {
     decrRefCount(node->obj);
     zfree(node);
 }
+
+/*
+ * 释放给定跳跃表，以及表中的所有结点
+ * 
+ * T = O(N)
+*/
+void zslFree(zskiplist *zsl) {
+    zskiplistNode *node = zsl->header->level[0].forward, *next;
+
+    // 释放表头
+    zfree(zsl->header);
+
+    // 释放表中所有结点
+    // T = O(N)
+    while (node) {
+        next = node->level[0].forward;
+        zslFreeNode(node);
+        node = next;
+    }
+
+    // 释放跳跃表结构
+    zfree(zsl);
+}
