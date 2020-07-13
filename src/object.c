@@ -50,6 +50,23 @@ void freeZsetObject(robj *o) {
 }
 
 /*
+ * 释放哈希对象
+*/
+void freeHashObject(robj *o) {
+    switch (o->encoding) {
+        case REDIS_ENCODING_HT:
+            dictRelease((dict*) o->ptr);
+            break;
+        case REDIS_ENCODING_ZIPLIST:
+            zfree(o->ptr);
+            break;
+        default:
+            redisPanic("Unknown hash encoding type");
+            break;
+    }
+}
+
+/*
  * 为对象的引用计数 -1
  * 
  * 当对象的引用计数降为 0 时，释放对象
