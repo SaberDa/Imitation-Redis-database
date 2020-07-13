@@ -48,8 +48,8 @@
  *    它允许执行类似 ZREVRANGE 这样的操作，从表尾向表头遍历跳跃表
 */
 
-#include "zskiplist.h"
-#include "zmalloc.h"
+#include "redis.h"
+#include "object.c"
 
 #include <math.h>
 
@@ -101,4 +101,14 @@ zskiplist *zslCreate(void) {
     zsl->tail = NULL;
 
     return zsl;
+}
+
+/*
+ * 释放给定的跳跃表结点
+ * 
+ * T = O(1)
+*/
+void zslFreeNode(zskiplistNode *node) {
+    decrRefCount(node->obj);
+    zfree(node);
 }
