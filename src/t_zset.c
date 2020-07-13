@@ -49,5 +49,25 @@
 */
 
 #include "zskiplist.h"
+#include "zmalloc.h"
 
 #include <math.h>
+
+static int zslLexValueGteMin(robj *value, zlexrangespec *spec);
+static int zslLexValueLteMax(robj *value, zlexrangespec *spec);
+
+/*
+ * 创建一个层数为 level 的跳跃表结点
+ * 并将结点的成员对象设置为 obj，分值设置为 score
+ * 
+ * 返回值为新创建的跳跃表结点
+ * 
+ * T = O(1)
+*/
+zskiplistNode *zslCreatNode(int level, double score, robj *obj) {
+    zskiplistNode *zn = zmalloc(sizeof(*zn) + level * sizeof(struct zskiplistLevel));
+    zn->score = score;
+    zn->obj = obj;
+
+    return zn;
+}
