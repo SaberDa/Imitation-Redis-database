@@ -13,6 +13,24 @@ void freeStringObject(robj *o) {
 }
 
 /*
+ * 释放列表对象
+*/
+void freeListObject(robj *o) {
+    switch (o->encoding) {
+        case REDIS_ENCODING_LINKEDLIST:
+            listRelease((list*) o->ptr);
+            break;
+        case REDIS_ENCODING_ZIPLIST:
+            zfree(o->ptr);
+            break;
+        default:
+            redisPanic("Unknown list encoding type");
+    }
+}
+
+
+
+/*
  * 为对象的引用计数 -1
  * 
  * 当对象的引用计数降为 0 时，释放对象
