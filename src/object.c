@@ -67,6 +67,13 @@ void freeHashObject(robj *o) {
 }
 
 /*
+ * 为对象的引用计数 +1
+*/
+void incrRefCount(robj *o) {
+    o->refcount++;
+}
+
+/*
  * 为对象的引用计数 -1
  * 
  * 当对象的引用计数降为 0 时，释放对象
