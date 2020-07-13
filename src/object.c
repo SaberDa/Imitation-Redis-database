@@ -29,6 +29,22 @@ void freeListObject(robj *o) {
 }
 
 /*
+ * 释放集合对象
+*/
+void freeSetObject(robj *o) {
+    switch (o->encoding) {
+        case REDIS_ENCODING_HT:
+            dictRelease((dict*) o->ptr);
+            break;
+        case REDIS_ENCODING_INTSET:
+            zfree(o->ptr);
+            break;
+        default:
+            redisPanic("Unknown set encoding type");
+    }
+}
+
+/*
  * 释放有序集合对象
 */
 void freeZsetObject(robj *o) {
@@ -84,7 +100,9 @@ void decrRefCount(robj *o) {
     // 释放对象
     if (o->refcount == 1) {
         switch(o->type) {
-            case REDIS_STRING: 
+            case REDIS_STRING: freeStringObject(o); break;
+            case REDIS_LIST: freeListObject(0); break;
+            case REDIS_SET: 
         }
     }
 }
