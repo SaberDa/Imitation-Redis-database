@@ -3,13 +3,16 @@
  * 跳跃表结点
 */
 
+#ifndef __ZSKIPLIST_H__
+#define __ZSKIPLIST_H__
+
 #include <stdio.h>
 
 #include "redis.h"
 #include "dict.h"
 
-#ifndef __ZSKIPLIST_H__
-#define __ZSKIPLIST_H__
+#define ZSKIPLIST_MAXLEVEL 32 /* Should be enough for 2^32 elements */
+#define ZSKIPLIST_P 0.25      /* Skiplist P = 1/4 */
 
 /* ZSETs use a specialized version of Skiplists */
 // 跳跃表结点

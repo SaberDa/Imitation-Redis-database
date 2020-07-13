@@ -71,3 +71,34 @@ zskiplistNode *zslCreatNode(int level, double score, robj *obj) {
 
     return zn;
 }
+
+/*
+ * 创建并返回一个新的跳跃表
+ * 
+ * T = O(1)
+*/
+zskiplist *zslCreate(void) {
+    int j;
+    zskiplist *zsl;
+
+    // 分配内存
+    zsl = zmalloc(sizeof(*zsl));
+
+    // 设置高度和起始层数
+    zsl->level = 1;
+    zsl->length = 0;
+
+    // 初始化表头结点
+    // T= O(1)
+    zsl->header = zslCreatNode(ZSKIPLIST_MAXLEVEL, 0, NULL);
+    for (j = 0; j < ZSKIPLIST_MAXLEVEL; j++) {
+        zsl->header->level[j].forward = NULL;
+        zsl->header->level[j].span = 0;
+    }
+    zsl->header->backward = NULL;
+
+    // 设置表尾结点
+    zsl->tail = NULL;
+
+    return zsl;
+}
