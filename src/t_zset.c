@@ -279,3 +279,44 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
 
     return x;
 }
+
+/*
+ * Internal function used by zslDelete, zslDeleteByScore and zslDeleteByRank
+ * 
+ * T = O(1)
+*/
+/*
+ * 内部删除函数
+*/
+void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update) {
+    int i;
+
+    // 更新所有和被删除结点 x 有关的结点的指针，
+    // 接触他们之间的关系
+    // T = O(1)
+    for (i = 0; i < zsl->level; i++) {
+        if (update[i]->level[i].forward == x) {
+            update[i]->level[i].span += x->level[i].span - 1;
+            update[i]->level[i].forward = x->level[i].forward;
+        } else {
+            update[i]->level[i].span -= 1;
+        }
+    }
+
+    // 更新被删除结点 x 的前进和后退指针
+    if (x->level[0].forward) {
+        x->level[0].forward->backward = x->backward;
+    } else {
+        zsl->tail = x->backward;
+    }
+
+    // 更新跳跃表最大层数
+    // (只在被删除结点是跳跃表中最高的结点时才执行)
+    // T = O(1)
+    while (zsl->level > 1 && zsl->header->level[zsl->level - 1].forward == NULL) {
+        zsl->level--;
+    }
+
+    // 跳跃表结点数 -1
+    zsl->length--;
+}
