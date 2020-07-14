@@ -135,3 +135,28 @@ void zslFree(zskiplist *zsl) {
     // 释放跳跃表结构
     zfree(zsl);
 }
+
+/*
+ * Returns a random level for the new skiplist node we are going to create
+ * 
+ * The return value of this functino is between 1 and ZSKIPLIST_MAXLEVEL
+ * (both inclusive), with a powerlaw-alike distrbution where higher
+ * levels are less likely to be returned.
+ * 
+ * T = O(N)
+*/
+/*
+ * 返回一个随机值，用作新跳跃表结点的层数
+ * 
+ * 返回值介于 1 和 ZSKIPLIST_MAXLEVEL 之间（包含 ZSKIPLIST_MAXLEVEL），
+ * 根据随机算法所使用的幂次定律，越大的值生成的几率越小
+*/
+int zslRandomLevel(void) {
+    int level = 1;
+
+    while ((random() & 0xFFFF) < (ZSKIPLIST_P * 0xFFFF)) {
+        level += 1;
+    }
+
+    return (level < ZSKIPLIST_MAXLEVEL) ? level : ZSKIPLIST_MAXLEVEL;
+}
