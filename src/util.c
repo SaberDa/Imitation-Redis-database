@@ -64,5 +64,28 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 }
 
 /*
- * 
+ * Convert a long long into a string. 
+ * Returns the number of characters needed to represent the number,
+ * that can be shorter if passed buffer length is not enough to 
+ * store the whole number
 */
+int ll2string(char *s, size_t len, long long value) {
+    char buf[32], *p;
+    unsigned long long v;
+    size_t l;
+
+    if (len == 0) return 0;
+    v = (value < 0) ? -value : value;
+    p = buf + 31;   // point to the last character
+    do {
+        *p-- = '0' + (v % 10);
+        v /= 10;
+    } while (v);
+    if (value < 0) *p-- = '-';
+    p++;
+    l = 32 - (p - buf);
+    if (l + 1 > len) l = len - 1;   // Make sure it fits, including the null term
+    memcpy(s, p, l);
+    s[l] = '\0';
+    return l;
+}
