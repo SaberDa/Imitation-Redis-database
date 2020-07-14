@@ -160,3 +160,122 @@ int zslRandomLevel(void) {
 
     return (level < ZSKIPLIST_MAXLEVEL) ? level : ZSKIPLIST_MAXLEVEL;
 }
+
+/*
+ * 创建一个成员为 obj, 分值为 score 的新结点
+ * 并将这个新结点插入到跳跃表 zsl 中
+ * 
+ * 函数的返回值为新结点
+ * 
+ * T_worst = O(N ^ 2)
+ * T_avg = O(Nlog(N))
+*/
+zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
+    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
+    unsigned int rank[ZSKIPLIST_MAXLEVEL];
+    int i, level;
+
+    redisAssert(!isnan(score));
+
+    // 在各个层查找结点的插入位置
+    // T_worst = O(N^2), T_avg = O(Nlog(N))
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+
+        /* store rank that is crossed to reach the insert position */
+        // 如果 i 不是 zsl->level-1 层
+        // 那么 i 层的起始 rank 值为 i+1 层的 rank 值
+        // 各个层的 rank 值一层层累计
+        // 最终 rank[0] 的值加一就是新结点的前置结点的排位
+        // rank[0] 会在后面成为计算 span 值和 rank 值的基础
+        rank[i] = i == (zsl->level - 1) ? 0 : rank[i + 1];
+
+        // 沿着前进指针遍历跳跃表
+        // T_worst = O(N^2), T_avg = O(Nlog(N))
+        while (x->level[i].forward && 
+               (x->level[i].forward->score < score ||
+                // 对比分值
+                (x->level[i].forward->score == score &&
+                 // 对比成员, T= O(N)
+                 compareStringObjects(x->level[i].forward->obj, obj) < 0))) {
+            // 记录沿途跨越了多少个结点
+            rank[i] += x->level[i].span;
+            // 移动至下一指针
+            x = x->level[i].forward;
+        }
+        // 记录将要和新结点相连接的结点
+        update[i] = x;
+    }
+
+    /*
+     * We assume the key is not already inside, since we allow 
+     * duplicated scores, and the re-insertion of score and redis
+     * object should never happen since the caller of zslInsert()
+     * should test in the hash table if the element is already 
+     * inside or not.
+     * 
+     * zslInsert() 的调用者会确保同分值且同成员的元素不会出现
+     * 所以这里不需要进一步检查，可以直接创建新元素
+    */
+
+    // 获取一个随机值作为新结点的层数
+    // T = O(N)
+    level = zslRandomLevel();
+
+    // 如果新结点的层数比表中其他结点的层数大
+    // 那么初始化表头结点中未使用的层，并将它们记录到 update 数组中
+    // 将来也指向新结点
+    if (level > zsl->level) {
+        // 初始化未使用层
+        // T = O(1)
+        for (i = zsl->level; i < level; i++) {
+            rank[i] = 0;
+            update[i] = zsl->header;
+            update[i]->level[i].span = zsl->length;
+        }
+        // 更新表中结点的最大层数
+        zsl->length = level;
+    }
+
+    // 创建新结点
+    x = zslCreatNode(level, score, obj);
+
+    // 将前面记录的指针指向新结点，并做相应的设置
+    // T = O(1)
+    for (i = 0; i < level; i++) {
+
+        // 设置新结点的 forward 指针
+        x->level[i].forward = update[i]->level[i].forward;
+
+        // 将沿途记录的各个结点的 forward 指针指向新结点
+        update[i]->level[i].forward = x;
+
+        /* update span covered by update[i] as x is inserted here */
+        // 计算新结点跨越的结点数量
+        x->level[i].span = update[i]->level[i].span - (rank[0] - rank[i]);
+
+        // 更新新结点插入之后，沿途结点的 span 值
+        // 其中的 +1 计算的是新结点
+        update[i]->level[i].span = (rank[0] - rank[i]) + 1;
+    }
+
+    /* increment span for untouched levels */
+    // 未解除的结点的 span 值也需要 +1，这些结点直接从表头指向新结点
+    // T = O(1)
+    for (i = level; i < zsl->level; i++) {
+        update[i]->level[i].span++;
+    }
+
+    // 设置新结点的后退指针
+    x->backward = (update[0] == zsl->header) ? NULL : update[0];
+    if (x->level[0].forward) {
+        x->level[0].forward->backward = x;
+    } else {
+        zsl->tail = x;
+    }
+
+    // 跳跃表中的结点计数 +1
+    zsl->length++;
+
+    return x;
+}
