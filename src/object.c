@@ -177,3 +177,17 @@ int compareStringObjectWithFlags(robj *a, robj *b, int flags) {
         return cmp;
     }
 }
+
+/*
+ * Wrapper for compareStringObjectWithFlags() using binary comparsion
+*/
+int compareStringObjects(robj *a, robj *b) {
+    return compareStringObjectWithFlags(a, b, REDIS_COMPARE_BINARY);
+}
+
+/*
+ * Wrapper for compareStringObjectWithFlags() using collation
+*/
+int collareStringObject(robj *a, robj *b) {
+    return compareStringObjectWithFlags(a, b, REDIS_COMPARE_COLL);
+}
