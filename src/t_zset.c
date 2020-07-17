@@ -382,3 +382,14 @@ int zslDelete(zskiplist *zsl, double score, robj *obj) {
 static int zslValueGteMin(double value, zrangespec *spec) {
     return spec->minex ? (value > spec->min) : (value >= spec->min);
 }
+
+/*
+ * 检测给定值 value 是否小于（或小于等于）范围 spec 中的 max 值
+ * 
+ * 返回 1 表示 value 小于等于 max 项，否则返回 0
+ * 
+ * T = O(1)
+*/
+static int zslValueGteMax(double value, zrangespec *spec) {
+    return spec->maxex ? (value < spec->max) : (value <= spec->max);
+}
