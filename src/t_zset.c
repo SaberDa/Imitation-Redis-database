@@ -320,3 +320,54 @@ void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update) {
     // 跳跃表结点数 -1
     zsl->length--;
 }
+
+/* 
+ * Delete an element with matching score/object from the skiplist
+ * 
+ * T_worst = O(N ^ 2)
+ * T_avg = O(N log(N))
+ */
+/*
+ * 从跳跃表 zsl 中删除班号给定结点 score 并且带有指定对象 obj 的结点
+*/
+int zslDelete(zskiplist *zsl, double score, robj *obj) {
+    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
+    int i;
+
+    // 遍历跳跃表，查找目标节点，并记录所有沿途结点
+    // T_worst = O(N ^ 2), T_avg = O(N log(N))
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        // 遍历跳跃表的复杂度为  T_worst = O(N ^ 2), T_avg = O(N log(N))
+        while (x->level[i].forward &&
+               (x->level[i].forward->score < score ||
+                // 对比分值
+                (x->level[i].forward->score == score &&
+                 // 对比对象, T = O(N)
+                 compareStringObjects(x->level[i].forward->obj, obj) < 0))) {
+            // 沿着前进指针移动
+            x = x->level[i].forward;
+        }
+        // 记录沿途结点
+        update[i] = x;
+    }
+
+    /*
+     * We may have multiple elements with the same score, what we
+     * need is to find the element with both the right score and object
+    */
+    /*
+     * 检查找到的元素 x，只有在它的分值和对象都相同时，才将它删除
+    */
+    x = x->level[0].forward;
+    if (x && score == x->score && equalStringObjects(x->obj, obj)) {
+        // T = O(1)
+        zslDeleteNode(zsl, x, update);
+        // T = O(1)
+        zslFreeNode(x);
+        return 1;
+    } else {
+        return 0;  /* not found */
+    }
+    return 0;  /* not found */
+}
