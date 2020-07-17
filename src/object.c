@@ -191,3 +191,34 @@ int compareStringObjects(robj *a, robj *b) {
 int collareStringObject(robj *a, robj *b) {
     return compareStringObjectWithFlags(a, b, REDIS_COMPARE_COLL);
 }
+
+/*
+ * Equal string objects return 1 if the two objects are the same 
+ * from the point of view of a string comparison, otherwise 0 
+ * is returned
+ * 
+ * Note that this function is faster then checking for 
+ * (compareStringObject(a, b) == 0) because it can perform some 
+ * more optimization
+*/
+/*
+ * 如果两个对象的值在字符串的形式上相等，那么返回 1，否则返回 0
+ * 
+ * 注意：这个函数做了相应的优化，所以比 (compareStringObject(a, b) == 0)
+ * 更快一些
+*/
+int equalStringObjects(robj *a, robj *b) {
+    // 这里的对象编码为 INT，直接对比值
+    // 这里避免了将整数值转换为字符串，所以效率更高
+    if (a->encoding == REDIS_ENCODING_INT &&
+        b->encoding == REDIS_ENCODING_INT) {
+        /*
+         * If both strings are integer encoded just check if the 
+         * stored long is the same
+        */
+        return a->ptr == b->ptr;
+    } else {
+    // 进行字符串比较
+        return compareStringObjects(a, b) == 0;
+    }
+}
