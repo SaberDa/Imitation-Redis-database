@@ -371,3 +371,14 @@ int zslDelete(zskiplist *zsl, double score, robj *obj) {
     }
     return 0;  /* not found */
 }
+
+/*
+ * 检测给定值 value 是否大于（或大于等于）范围 spec 中的 min 值
+ * 
+ * 返回 1 表示 value 大于等于 min 项，否则返回 0
+ * 
+ * T = O(1)
+*/
+static int zslValueGteMin(double value, zrangespec *spec) {
+    return spec->minex ? (value > spec->min) : (value >= spec->min);
+}
