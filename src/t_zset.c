@@ -393,3 +393,38 @@ static int zslValueGteMin(double value, zrangespec *spec) {
 static int zslValueGteMax(double value, zrangespec *spec) {
     return spec->maxex ? (value < spec->max) : (value <= spec->max);
 }
+
+/*
+ * Returns if there is a part of the zset is in range
+ * 
+ * T = O(1)
+*/
+/*
+ * 如果给定的分值范围包含在跳跃表的分值范围之内
+ * 那么返回 1，否则返回 0
+*/
+int zslIsInRange(zskiplist *zsl, zrangespec *range) {
+    zskiplistNode *x;
+
+    /* Test for ranges that will always be empty */
+    // 先排除总为空的范围值
+    if (range->min > range->max ||
+        (range->min == range->max &&
+         (range->minex || range->maxex))) {
+        return 0;
+    }
+
+    // 检查最大分值
+    x = zsl->tail;
+    if (x == NULL || !zslValueGteMin(x->score, range)) {
+        return 0;
+    }
+
+    // 检查最小分值
+    x = zsl->header->level[0].forward;
+    if (x == NULL || !zslValueGteMax(x->score, range)) {
+        return 0;
+    }
+
+    return 1;
+}
