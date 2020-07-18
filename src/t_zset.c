@@ -572,3 +572,40 @@ unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dic
 
     return removed;
 }
+
+unsigned long zslDeleteRangeByLex(zskiplist *zsl, zlexrangespec *range, dict *dict) {
+    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
+    int i;
+    unsigned long removed = 0;
+
+    // 记录所有和被删除结点有关的结点
+    // T_wrost = O(N) , T_avg = O(log N)
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        while (x->level[i].forward &&
+               !zslLexValueGteMin(x->level[i].forward->obj, range)) {
+            x = x->level[i].forward;
+        }
+        update[i] = x;
+    }
+
+    /* Current node is the last with score < or <= min. */
+    x = x->level[0].forward;
+
+    /* Delete nodes while in range. */
+    // 删除范围中的所有结点
+    // T = O(N)
+    while (x && zslLexValueLteMax(x->obj, range)) {
+        // 记录下一个结点
+        zskiplistNode *next = x->level[0].forward;
+
+        zslDeleteNode(zsl, x, update);
+        dictDelete(dict, x->obj);
+        zslFreeNode(x);
+
+        removed++;
+        x = next;
+    }
+
+    return removed;
+}
