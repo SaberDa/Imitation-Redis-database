@@ -513,3 +513,62 @@ zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range) {
 
     return x;
 }
+
+/*
+ * Delete all the elements with score between min and max from the skiplist
+ * 
+ * Min and Max are inclusive, so a score >= min || score <= max is deleted
+ * 
+ * Note that this function takes the reference to the hash table view of 
+ * the sorted set, in ordered to remove the elements from the hash table too.
+ * 
+ * T = O(1)
+*/
+/*
+ * 删除所有分值在给定范围之内的结点
+ * 
+ * min 和 max 参数都是包含在范围之内的，所以 score >= min || score <= max 的
+ * 结点都会被删除
+ * 
+ * 结点不仅会从跳跃表中删除，而且还会从对应的字典中删除
+ * 
+ * 返回值为被删除结点的数量
+*/
+unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dict) {
+    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
+    unsigned long removed = 0;
+    int i;
+
+    // 记录所有和被删除结点有关的结点
+    // T_wrost = O(N) , T_avg = O(log N)
+    x = zsl->header;
+    while (i = zsl->level - 1; i >= 0; i--) {
+        while (x->level[i].forward && (range->minex ?
+               x->level[i].forward->score <= range->min :
+               x->level[i].forward->score < range->min)) {
+            x = x->level[i].forward;
+        }
+        // 记录沿途结点
+        update[i] = x;
+    }
+
+    /* Current node is the last with score < or score <= min */
+    // 定位到给定范围开始的第一个结点
+    x = x->level[0].forward;
+
+    /* Delete nodes while in range */
+    // 删除范围中的所有结点
+    // T = O(N)
+    while (x &&
+           (range->maxex ? x->score < range->max : x->score <= range->max)) {
+        // 记录下一个结点
+        zskiplistNode *next = x->level[0].forward;
+        zslDeleteNode(zsl, x, update);
+        dictDelete(dict, x->obj);
+        zslFreeNode(x);
+        removed++;
+        x = next;
+    }
+
+    return removed;
+}
