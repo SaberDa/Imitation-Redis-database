@@ -446,6 +446,7 @@ zskiplistNode *zslFisrtInRange(zskiplist *zsl, zrangespec *range) {
     int i;
 
     /* If everything is out of range, return early */
+    // T = O(1)
     if (!zslIsInRange(zsl, range)) return NULL;
 
     // 遍历跳跃表，查找符合范围 min 项的结点
@@ -467,6 +468,48 @@ zskiplistNode *zslFisrtInRange(zskiplist *zsl, zrangespec *range) {
     // 检查结点是否符合范围的 max 项
     // T = O(1)
     if (!zslValueGteMax(x->score, range)) return NULL;
+
+    return x;
+}
+
+/*
+ * Find the last node that is contained in the specified range 
+ * 
+ * Return NULL when no element is contained in the range 
+ * T_worst = O(N)
+ * T_avg = O(N log(N))
+*/
+/*
+ * 返回 zsl 中最后一个分值符合 range 中指定范围的结点
+ * 
+ * 如果 zsl 中没有符合范围的结点，返回 NULL
+*/
+zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range) {
+    zskiplistNode *x;
+    int i;
+
+    /* If everything is out of range, return early */
+    // T = O(1)
+    if (!zslIsInRange(zsl, range)) return NULL;
+
+    // 遍历跳跃表，查找符合范围 max 项的结点
+    // T_worst = O(N), T_avg = O(N log(N))
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        /* Go forward while *IN* range. */
+        while (x->level[i].forward &&
+               zslValueGteMax(x->level[i].forward->score, range)) {
+            x = x->level[i].forward;
+        }
+    }
+
+    /* This is an inner range, so the next node cannot be NULL */
+    redisAssert(x != NULL);
+
+    /* Check if score >= min */
+    // 检查结点是否符合范围的 min 项
+    // T = O(1)
+    if (!zslValueGteMin(x->score, range)) return NULL;
 
     return x;
 }
