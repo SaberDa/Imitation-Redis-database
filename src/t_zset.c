@@ -542,7 +542,7 @@ unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dic
     // 记录所有和被删除结点有关的结点
     // T_wrost = O(N) , T_avg = O(log N)
     x = zsl->header;
-    while (i = zsl->level - 1; i >= 0; i--) {
+    for (i = zsl->level - 1; i >= 0; i--) {
         while (x->level[i].forward && (range->minex ?
                x->level[i].forward->score <= range->min :
                x->level[i].forward->score < range->min)) {
@@ -607,5 +607,55 @@ unsigned long zslDeleteRangeByLex(zskiplist *zsl, zlexrangespec *range, dict *di
         x = next;
     }
 
+    return removed;
+}
+
+/*
+ * Delete all the elements with rank between start and end from the skiplist
+ * 
+ * Start and end are inclusive. Note that start and end need to be 1-based
+ * 
+ * T = O(N)
+*/
+/*
+ * 从跳跃表中删除所有给定排位内的结点
+ * 
+ * start 和 end 两个位置都是包含在内的，注意他们都是以 1 为起始值
+ * 
+ * 函数的返回值为被删除结点的数量
+*/
+unsigned long zslDeleteRangeByRank(zskiplist *zsl, unsigned int start, unsigned int end, dict *dict) {
+    zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
+    unsigned long traversed = 0, removed = 0;
+    int i;
+
+    // 沿着前进指针移动到指定排位的起始位置，并记录所有沿途指针
+    // T_wrost = O(N) , T_avg = O(log N)
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        while (x->level[i].forward && (traversed + x->level[i].span) < start) {
+            traversed += x->level[i].span;
+            x = x->level[i].forward;
+        }
+        update[i] = x;
+    }
+
+    // 移动到排位起始的第一个结点
+    traversed++;
+    x = x->level[0].forward;
+
+    // 删除给定范围内的结点
+    // T = O(N)
+    while (x && traversed <= end) {
+        // 记录下一个结点
+        zskiplistNode *next = x->level[0].forward;
+        zslDeleteNode(zsl, x, update);
+        dictDelete(dict, x->obj);
+        zslFreeNode(x);
+        x = next;
+
+        removed++;
+        traversed++;
+    }
     return removed;
 }
