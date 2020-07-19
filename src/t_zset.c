@@ -659,3 +659,52 @@ unsigned long zslDeleteRangeByRank(zskiplist *zsl, unsigned int start, unsigned 
     }
     return removed;
 }
+
+/*
+ * Find the rank for an element by both score and key
+ * 
+ * Returns 0 when the element cannot be found, rank otherwise
+ * 
+ * Node that the rank is 1-based due to the span of zsl->header 
+ * to the first element
+ * 
+ * T_worst = O(N)
+ * T_avg = O(logN)
+*/
+/*
+ * 查找包含给定分值和成员对象的结点在跳跃表中的排位
+ * 
+ * 如果没有包含给定分值和对象成员的结点，返回 0，否则返回排位
+ * 
+ * 注意，因为跳跃表的表头也被计算在内，所以排位的初始值为 1
+*/
+unsigned long zslGetRank(zskiplist *zsl, double score, robj *o) {
+    zskiplistNode *x;
+    unsigned long rank = 0;
+    int i;
+
+    // 遍历整个跳跃表
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        while (x->level[i].forward &&
+               (x->level[i].forward->score < score ||
+                // 对比分值
+                (x->level[i].forward->score == score &&
+                 // 对比对象成员
+                 compareStringObjects(x->level[i].forward->obj, o) <= 0))) {
+            // 累计跨越的结点数量
+            rank += x->level[i].span;
+            // 沿着前进指针遍历跳跃表
+            x = x->level[i].forward;
+        }
+
+        /* x might be equal to zsl->header, so that if obj is non-NULL */
+        // 必须确保不仅分值相等，而且成员对象也要相等
+        // T = O(N)
+        if (x->obj && equalStringObjects(x->obj, o)) {
+            return rank;
+        }
+    }
+    /* not found */
+    return 0;
+}
