@@ -708,3 +708,38 @@ unsigned long zslGetRank(zskiplist *zsl, double score, robj *o) {
     /* not found */
     return 0;
 }
+
+/*
+ * Finds an element by its rank. The rank argument needs to be 1-based
+ * 
+ * T_worst = O(N)
+ * t_avg = O(logN)
+*/
+/*
+ * 根据排位在跳跃表中查找元素。排位的起始位置为 1
+ * 
+ * 成功查找返回相应的跳跃表结点，没找到返回 NULL
+*/
+zskiplistNode* zslGetElementByRank(zskiplist *zsl, unsigned long rank) {
+    zskiplistNode *x;
+    unsigned long traversed = 0;
+    int i;
+
+    // 遍历跳跃表结点
+    // T_wrost = O(N), T_avg = O(log N)
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        while (x->level[i].forward && (traversed + x->level[i].span) <= rank) {
+            traversed += x->level[i].span;
+            x = x->level[i].forward;
+        }
+
+        // 如果越过的结点数量已经等于 rank
+        // 那么说明已经找到了要找的结点
+        if (traversed == rank) {
+            return x;
+        }
+    }
+    /* Not found */
+    return NULL;
+}
