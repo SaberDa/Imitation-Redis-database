@@ -8,6 +8,12 @@
 #include "zmalloc.h"
 #include "util.h"
 
+#include <stdlib.h>
+
+/* Error codes */
+#define REDIS_OK    0
+#define REDIS_ERR   -1
+
 /* We can print the stacktrace, so our assert is defined this way: */
 #define redisAssertWithInfo(_c,_o,_e) ((_e)?(void)0 : (_redisAssertWithInfo(_c,_o,#_e,__FILE__,__LINE__),_exit(1)))
 #define redisAssert(_e) ((_e)?(void)0 : (_redisAssert(#_e,__FILE__,__LINE__),_exit(1)))
