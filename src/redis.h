@@ -41,6 +41,34 @@
 #define REDIS_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
 #define REDIS_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
 
+/* Return the UNIX time in microseconds */
+// 返回微秒格式的 UNIX 时间
+// 1 秒 = 1 000 000 微秒
+long long ustime(void) {
+    struct timeval tv;
+    long long ust;
+
+    gettimeofday(&tv, NULL);
+    ust = ((long long)tv.tv_sec)*1000000;
+    ust += tv.tv_usec;
+    return ust;
+}
+
+/* Return the UNIX time in milliseconds */
+// 返回毫秒格式的 UNIX 时间
+// 1 秒 = 1 000 毫秒
+long long mstime(void) {
+    return ustime()/1000;
+}
+
+unsigned int getLRUClock(void) {
+    return (mstime()/REDIS_LRU_CLOCK_RESOLUTION) & REDIS_LRU_CLOCK_MAX;
+}
+
+/* Global vars */
+struct redisServer server; /* server global state */
+struct redisCommand *commandTable;
+
 /* Macro used to obtain the current LRU clock.
  * If the current resolution is lower than the frequency we refresh the
  * LRU clock (as it should be in production servers) we return the
@@ -64,7 +92,7 @@ typedef struct redisObject {
 
     unsigned encoding:4;            // 编码
     
-    unsigned lur:REDIS_LRU_BITS;    // 对象最后一次被访问的时间
+    unsigned lru:REDIS_LRU_BITS;    // 对象最后一次被访问的时间
 
     int refcount;                   // 引用计数
 
