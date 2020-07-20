@@ -852,3 +852,29 @@ int zslParseLexRangeItem(robj *item, robj **dest, int *ex) {
             return REDIS_ERR;
     }
 }
+
+/*
+ * Populate the rangespec according to the objects min and max
+ * 
+ * Return REDIS_OK on success. On error REDIS_ERR is returned.
+ * When OK is returned the structure must be freed with zslFreeLexRange(),
+ * otherwise no release is needed.
+*/
+static int zslParseLexRange(robj *min, robj *max, zlexrangespec *spec) {
+    /*
+     * The range can't be valid if objects are integer encoded.
+     * Every item must start with ( or [.
+    */
+    if (min->encoding == REDIS_ENCODING_INT ||
+        max->encoding == REDIS_ENCODING_INT) return REDIS_ERR;
+    
+    spec->min = spec->max = NULL;
+    if (zslParseLexRangeItem(min, &spec->min, &spec->minex) == REDIS_ERR ||
+        zslParseLexRangeItem(max, &spec->max, &spec->maxex) == REDIS_ERR) {
+        if (spec->min) decrRefCount(spec->min);
+        if (spec->max) decrRefCount(spec->max);
+        return REDIS_ERR;
+    } else {
+        return REDIS_OK;
+    }
+}
