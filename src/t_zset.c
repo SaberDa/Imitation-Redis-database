@@ -441,7 +441,7 @@ int zslIsInRange(zskiplist *zsl, zrangespec *range) {
  * 
  * 如果 zsl 中没有符合范围的结点，返回 NULL
 */
-zskiplistNode *zslFisrtInRange(zskiplist *zsl, zrangespec *range) {
+zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range) {
     zskiplistNode * x;
     int i;
 
@@ -805,4 +805,50 @@ static int zslParseRange(robj *min, robj *max, zrangespec *spec) {
     }
 
     return REDIS_OK;
+}
+
+/* ---------------------- Lexicographic Ranges ------------------------- */
+
+/*
+ * Parse max or min argument of ZRANGEBYLEX
+ * (foo means foo (open interval)
+ * [foo means foo (closed interval)
+ * - means the min string possible
+ * + means the max string possible
+ * 
+ * If the string is valid the *dest pointer is set to the redis object
+ * that will be used for the comparison, and ex will be set to 0 or 1
+ * respectively if the item is exclusive or inclusive. REDIS_OK will be 
+ * returned
+ * 
+ * If the string is not a valid range REDIS_ERR is returned, and the 
+ * value of *dest and *ex is undefined
+*/
+int zslParseLexRangeItem(robj *item, robj **dest, int *ex) {
+    char *c = item->ptr;
+
+    switch (c[0]) {
+        case '+':
+            if (c[1] != '\0') return REDIS_ERR;
+            *ex = 0;
+            *dest = shared.maxstring;
+            incrRefCount(shared.maxstring);
+            return REDIS_OK;
+        case '-':
+            if (c[1] != '\0') return REDIS_ERR;
+            *ex = 0;
+            *dest = shared.minstring;
+            incrRefCount(shared.minstring);
+            return REDIS_OK;
+        case '(':
+            *ex = 1;
+            *dest = createStringObject(c + 1, sdslen(c) - 1);
+            return REDIS_OK;
+        case '[':
+            *ex = 0;
+            *dest = createStringObject(c + 1, sdslen(c) - 1);
+            return REDIS_OK;
+        default:
+            return REDIS_ERR;
+    }
 }
