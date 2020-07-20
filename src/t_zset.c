@@ -878,3 +878,12 @@ static int zslParseLexRange(robj *min, robj *max, zlexrangespec *spec) {
         return REDIS_OK;
     }
 }
+
+/*
+ * Free a lex range structure, must be called only after zelParseLexRange()
+ * populated the structure with success (REDIS_OK returned)
+*/
+void zslFreeLexRange(zlexrangespec *spec) {
+    decrRefCount(spec->min);
+    decrRefCount(spec->max);
+}
