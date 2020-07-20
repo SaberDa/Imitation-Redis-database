@@ -22,6 +22,19 @@ robj *createObject(int type, void *ptr) {
     return o;
 }
 
+/*
+ * Create a string object with encoding REDIS_ENCODING_RAW, that 
+ * is a plain string object where o->ptr points to a proper sds 
+ * string
+*/
+/*
+ * 创建一个 REDIS_ENCODING_RAW 编码的字符对象
+ * 对象的指针指向一个 sds 结构
+*/
+robj *createRawStringObject(char *ptr, size_t len) {
+    return createObject(REDIS_STRING, sdsnewlen(ptr, len));
+}
+
 
 /*
  * 释放字符串对象
