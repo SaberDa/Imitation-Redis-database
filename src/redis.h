@@ -41,6 +41,13 @@
 #define REDIS_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
 #define REDIS_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
 
+/* Macro used to obtain the current LRU clock.
+ * If the current resolution is lower than the frequency we refresh the
+ * LRU clock (as it should be in production servers) we return the
+ * precomputed value, otherwise we need to resort to a function call. */
+#define LRU_CLOCK() ((1000/server.hz <= REDIS_LRU_CLOCK_RESOLUTION) ? server.lruclock : getLRUClock())
+
+
 
 #define sdsEncodedObject(objptr) (objptr->encoding == REDIS_ENCODING_RAW || objptr->encoding == REDIS_ENCODING_EMBSTR)
 
@@ -78,6 +85,24 @@ typedef struct zset {
     zskiplist *zsl;
 } zset;
 
+/* Our shared "common" objects */
 
+struct sharedObjectsStruct shared;
+
+// 通过复用来减少内存碎片，以及减少操作耗时的共享对象
+struct sharedObjectsStruct {
+    robj *crlf, *ok, *err, *emptybulk, *czero, *cone, *cnegone, *pong, *space,
+    *colon, *nullbulk, *nullmultibulk, *queued,
+    *emptymultibulk, *wrongtypeerr, *nokeyerr, *syntaxerr, *sameobjecterr,
+    *outofrangeerr, *noscripterr, *loadingerr, *slowscripterr, *bgsaveerr,
+    *masterdownerr, *roslaveerr, *execaborterr, *noautherr, *noreplicaserr,
+    *busykeyerr, *oomerr, *plus, *messagebulk, *pmessagebulk, *subscribebulk,
+    *unsubscribebulk, *psubscribebulk, *punsubscribebulk, *del, *rpop, *lpop,
+    *lpush, *emptyscan, *minstring, *maxstring,
+    *select[REDIS_SHARED_SELECT_CMDS],
+    *integers[REDIS_SHARED_INTEGERS],
+    *mbulkhdr[REDIS_SHARED_BULKHDR_LEN], /* "*<value>\r\n" */
+    *bulkhdr[REDIS_SHARED_BULKHDR_LEN];  /* "$<value>\r\n" */
+};
 
 #endif //ifndef __REDIS_H__
