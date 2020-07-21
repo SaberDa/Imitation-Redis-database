@@ -969,3 +969,31 @@ zskiplistNode *zslFirstInLexRange(zskiplist *zsl, zlexrangespec *range) {
     if (!zslLexValueLteMax(x->obj, range)) return NULL;
     return x;
 }
+
+/*
+ * Find the last node that is contained in the specified range.
+ * Returns NULL when no element is contained in the range
+*/
+zskiplistNode *zslLastInLexRange(zskiplist *zsl, zlexrangespec *range) {
+    zskiplistNode *x;
+    int i;
+
+    /* If everything is out of range, return early */
+    if (!zslIsInLexRange(zsl, range)) return NULL;
+
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        /* Go forward while 'IN' range */
+        while (x->level[i].forward &&
+               zslLexValueLteMax(x->level[i].forward->obj, range)) {
+            x = x->level[i].forward;
+        }
+    }    
+
+    /* This is an inner range, so this node cannot be NULL */
+    redisAssert(x != NULL);
+
+    /* Check if score >= min */
+    if (!zslLexValueGteMin(x->obj, range)) return NULL;
+    return x;
+}
