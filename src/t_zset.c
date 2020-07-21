@@ -940,3 +940,32 @@ int zslIsInLexRange(zskiplist *zsl, zlexrangespec *range) {
     }
     return 1;
 }
+
+/*
+ * Find the first node that is contained in the specified lex range.
+ * Returns NULL when no element is contained in the range
+*/
+zskiplistNode *zslFirstInLexRange(zskiplist *zsl, zlexrangespec *range) {
+    zskiplistNode *x;
+    int i;
+
+    /* If everything is out of range, return early */
+    if (!zslIsInLexRange(zsl, range)) return NULL;
+
+    x = zsl->header;
+    for (i = zsl->level - 1; i >= 0; i--) {
+        /* Go forward while 'OUT' of range */
+        while (x->level[i].forward &&
+               !zslLexValueGteMin(x->level[i].forward->obj, range)) {
+            x = x->level[i].forward;
+        }
+    }
+
+    /* This is an inner range, so the next node connot be NULL */
+    x = x->level[0].forward;
+    redisAssert(x != NULL);
+
+    /* Check if score <= max */
+    if (!zslLexValueLteMax(x->obj, range)) return NULL;
+    return x;
+}
