@@ -887,3 +887,20 @@ void zslFreeLexRange(zlexrangespec *spec) {
     decrRefCount(spec->min);
     decrRefCount(spec->max);
 }
+
+/*
+ * This is just a wrapper to compareStringObjects() that is able to
+ * handle shared.minstring and shared.maxstring as the queivalent of
+ * -inf and +inf for strings
+*/
+int compareStringObjectsForLexRange(robj *a, robj *b) {
+    /*
+     * This makes sure that we handle inf, inf and -inf ASAP. 
+     * One special case less
+    */
+    if (a == b) return 0;
+
+    if (a == shared.minstring || b == shared.maxstring) return -1;
+    if (a == shared.maxstring || b == shared.minstring) return 1;
+    return compareStringObjects(a, b);
+}
