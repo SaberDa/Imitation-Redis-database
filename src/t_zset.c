@@ -904,3 +904,15 @@ int compareStringObjectsForLexRange(robj *a, robj *b) {
     if (a == shared.maxstring || b == shared.minstring) return 1;
     return compareStringObjects(a, b);
 }
+
+static int zslLexValueGteMin(robj *value, zlexrangespec *spec) {
+    return spec->minex ?
+           (compareStringObjectsForLexRange(value, spec->min) > 0) :
+           (compareStringObjectsForLexRange(value, spec->min >= 0));
+}
+
+static int zslLexValueGteMax(robj *value, zlexrangespec *spec) {
+    return spec->maxex ?
+           (compareStringObjectsForLexRange(value, spec->max) > 0) :
+           (compareStringObjectsForLexRange(value, spec->max) >= 0);
+}
