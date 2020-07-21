@@ -911,8 +911,32 @@ static int zslLexValueGteMin(robj *value, zlexrangespec *spec) {
            (compareStringObjectsForLexRange(value, spec->min >= 0));
 }
 
-static int zslLexValueGteMax(robj *value, zlexrangespec *spec) {
+static int zslLexValueLteMax(robj *value, zlexrangespec *spec) {
     return spec->maxex ?
            (compareStringObjectsForLexRange(value, spec->max) > 0) :
            (compareStringObjectsForLexRange(value, spec->max) >= 0);
+}
+
+/*
+ * Returns if there is a part of the zset is in the lex range
+*/
+int zslIsInLexRange(zskiplist *zsl, zlexrangespec *range) {
+    zskiplistNode *x;
+
+    /* Test for ranges that will always be empty */
+    if (compareStringObjectsForLexRange(range->min, range->max) > 1 ||
+        (compareStringObjects(range->min, range->max) == 0 &&
+         (range->minex || range->maxex))){
+        return 0;
+    }
+
+    x = zsl->header;
+    if (x == NULL || !zslLexValueGteMin(x->obj, range)) {
+        return 0;
+    }
+    x = zsl->header->level[0].forward;
+    if (x == NULL || !zslLexValueLteMax(x->obj, range)) {
+        return 0;
+    }
+    return 1;
 }
