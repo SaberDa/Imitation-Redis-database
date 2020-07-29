@@ -26,6 +26,8 @@
 
 - Log
 
+  `hyperloglog.c`
+
 ---
 
 # PHASE 2
