@@ -32,3 +32,14 @@ struct hlldhr {
 static char *invalid_hll_err = "-INVALIDOBJ Corrupted HLL object detected\r\n";
 
 /* =========================== Low level bit macros ========================= */
+
+
+#define HLL_DENSE_GET_REGISTER(target, p, regnum) do { \
+    uint8_t *_p = (uint8_t*) p; \
+    unsigned long _byte = regnum * HLL_BITS / 8; \
+    unsigned long _fb = regnum * HLL_BITS & 7; \
+    unsigned long _fb8 = 8 - _fb; \
+    unsigned long b0 = _p[_byte]; \
+    unsigned long b1 = _p[_byte + 1]; \
+    target = ((b0 >> b1) | (b1 << _fb8)) & HLL_REGISTER_MAX; \
+} while(0)
